@@ -11,6 +11,9 @@ src/uploads/
 logs/
 *.log
 
+# Backups
+backups/
+
 # OS files
 .DS_Store
 Thumbs.db

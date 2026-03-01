@@ -1,4 +1,3 @@
-import { Redis } from "ioredis";
 import { redisConnection } from "../config/redis.js";
 import { sendDocumentProcessedEmail, sendDocumentErrorEmail } from "./email.service.js";
 import { User } from "../models/user.model.js";

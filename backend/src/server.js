@@ -4,11 +4,14 @@ import cors from "cors";
 import { pool } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import documentRoutes from "./routes/document.routes.js";
+import supplierRoutes from "./routes/supplier.routes.js";
+import tagRoutes from "./routes/tag.routes.js";
 import statsRoutes from "./routes/stats.routes.js";
 import emailRoutes from "./routes/email.routes.js";
 import "./config/redis.js";
 import { documentQueue } from "./queues/documentQueue.js";
 import "./queues/documentWorker.js";
+import { syncScadenzaForAllDocuments } from "./services/scadenzaTags.service.js";
 import cookieParser from "cookie-parser";
 import { globalRateLimiter } from "./middlewares/rateLimiter.middleware.js";
 import { validateEnvOrExit } from "./utils/envValidator.js";
@@ -36,8 +39,10 @@ app.use(express.json());
 // 📊 Request Logging (PRIMA di tutto per tracciare ogni richiesta)
 app.use(requestLogger);
 
-// 🛡️ Rate Limiting Globale (PRIMA delle routes)
-app.use(globalRateLimiter);
+// 🛡️ Rate Limiting Globale (salta in development per evitare 429 durante test)
+if (process.env.NODE_ENV === "production") {
+  app.use(globalRateLimiter);
+}
 
 // Test DB
 pool.execute("SELECT 1")
@@ -52,11 +57,28 @@ pool.execute("SELECT 1")
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/suppliers", supplierRoutes);
+app.use("/api/tags", tagRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/email", emailRoutes);
 
 // ❌ Error Handler Centralizzato (DEVE essere DOPO tutte le routes)
 app.use(errorHandler);
+
+// 🏷️ Sync periodico tag scadenza (ogni ora) – aggiorna 30/20/10/3/2/1/overdue
+setInterval(async () => {
+  try {
+    const { updated } = await syncScadenzaForAllDocuments();
+    if (updated > 0) {
+      logger.info("Scadenza tags synced", { documentsUpdated: updated });
+    }
+  } catch (err) {
+    logger.error("Scadenza tags sync failed", {
+      error: err?.message,
+      stack: err?.stack
+    });
+  }
+}, 60 * 60 * 1000);
 
 // Start
 const PORT = process.env.PORT || 5000;

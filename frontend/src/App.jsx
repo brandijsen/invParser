@@ -13,7 +13,7 @@ import ResetPassword from "./pages/ResetPassword";
 import DummyPrivatePage from "./pages/DummyPrivatePage";
 import Documents from "./pages/Documents";
 import DocumentDetail from "./pages/DocumentDetail";
-
+import Suppliers from "./pages/Suppliers";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PersistLogin from "./components/PersistLogin";
 
@@ -69,6 +69,18 @@ function App() {
               <PersistLogin>
                 <ProtectedRoute>
                   <DocumentDetail />
+                </ProtectedRoute>
+              </PersistLogin>
+            }
+          />
+
+          {/* SUPPLIERS */}
+          <Route
+            path="/suppliers"
+            element={
+              <PersistLogin>
+                <ProtectedRoute>
+                  <Suppliers />
                 </ProtectedRoute>
               </PersistLogin>
             }

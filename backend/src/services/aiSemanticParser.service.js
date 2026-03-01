@@ -35,6 +35,24 @@ For EACH field you extract, add a "confidence" score (0-100):
 - 70-89: Clearly present but requires minor interpretation
 - 50-69: Inferred from context or partially ambiguous
 - 0-49: Very uncertain or missing (avoid extracting if confidence is this low)
+
+DOCUMENT IDENTIFICATION (for all invoices):
+- invoice_number: the invoice/document number (e.g. "FATT-2025-001", "INV-45", "2025/1234")
+- invoice_date: the invoice issue date (prefer format YYYY-MM-DD for consistency)
+- due_date: payment due date / scadenza pagamento (e.g. "Due Date", "Payment due", "Scadenza pagamento", "Pagamento entro"). Always return as YYYY-MM-DD. If you see DD/MM/YYYY, convert to YYYY-MM-DD.
+
+SELLER (for all invoices - the issuer/emittente):
+Always extract the SELLER (company or person who issued the invoice):
+- seller.name: company or person name
+- seller.vat_number: VAT number (IT..., EU..., etc.)
+- seller.address: full address if present (optional)
+Extract EXACTLY as written on the document.
+
+LINE ITEMS (when the invoice has an item table):
+If the document has a clear table/list of items (description, quantity, unit price, amount), extract as line_items array.
+Each item: { "description": "...", "quantity": number, "unit_price": "0.00", "amount": "0.00" }
+- Omit line_items if no item table is present
+- Max 30 items; use dot as decimal separator
 `;
 
     // Define rules and JSON structure per subtype
@@ -51,11 +69,20 @@ Extract ONLY these fields (if present):
 - withholding_tax: { rate, amount } (income tax withheld)
 - stamp_duty: { present: boolean, amount } (administrative fee)
 - net_payable: final amount to pay
+- line_items: array of items when fee is itemized (optional)
 
 Calculation flow: Gross + VAT - Withholding + Stamp = Net Payable
 `;
       jsonStructure = `
 {
+  "invoice_number": { "value": "2025/001", "confidence": 98 },
+  "invoice_date": { "value": "2025-01-15", "confidence": 95 },
+  "due_date": { "value": "2025-02-15", "confidence": 90 },
+  "seller": {
+    "name": { "value": "Studio Rossi Avvocati", "confidence": 95 },
+    "vat_number": { "value": "IT12345678901", "confidence": 98 },
+    "address": { "value": "Via Roma 1, 20100 Milano", "confidence": 85 }
+  },
   "amounts": {
     "gross_fee": { "value": "1000.00", "confidence": 95 },
     "vat": { 
@@ -72,7 +99,10 @@ Calculation flow: Gross + VAT - Withholding + Stamp = Net Payable
     },
     "net_payable": { "value": "1022.00", "confidence": 96 },
     "currency": { "value": "EUR", "confidence": 100 }
-  }
+  },
+  "line_items": [
+    { "description": "Parcella gennaio 2025", "quantity": 1, "unit_price": "1000.00", "amount": "1000.00" }
+  ]
 }
 `;
     } else if (document_subtype === "reverse_charge") {
@@ -82,16 +112,28 @@ DOCUMENT SUBTYPE: REVERSE CHARGE (Cross-border B2B)
 Extract ONLY these fields (if present):
 - subtotal: net amount before tax
 - total_amount: usually same as subtotal (no VAT applied by seller)
+- line_items: array of items when item table is present
 
 Note: VAT 0% or not applicable (buyer liable for VAT)
 `;
       jsonStructure = `
 {
+  "invoice_number": { "value": "DE-2025-045", "confidence": 98 },
+  "invoice_date": { "value": "2025-01-10", "confidence": 95 },
+  "due_date": { "value": "2025-02-10", "confidence": 90 },
+  "seller": {
+    "name": { "value": "Tech Corp EU GmbH", "confidence": 95 },
+    "vat_number": { "value": "DE123456789", "confidence": 98 },
+    "address": { "value": "Berliner Str. 1, 10115 Berlin", "confidence": 85 }
+  },
   "amounts": {
     "subtotal": { "value": "5000.00", "confidence": 95 },
     "total_amount": { "value": "5000.00", "confidence": 95 },
     "currency": { "value": "EUR", "confidence": 100 }
-  }
+  },
+  "line_items": [
+    { "description": "Software license", "quantity": 1, "unit_price": "5000.00", "amount": "5000.00" }
+  ]
 }
 `;
     } else if (document_subtype === "tax_exempt") {
@@ -101,16 +143,27 @@ DOCUMENT SUBTYPE: TAX EXEMPT
 Extract ONLY these fields (if present):
 - subtotal: net amount
 - total_amount: usually same as subtotal (no VAT/tax)
+- line_items: array of items when item table is present
 
 Note: VAT-exempt services or flat-rate regime
 `;
       jsonStructure = `
 {
+  "invoice_number": { "value": "MB/2025-003", "confidence": 98 },
+  "invoice_date": { "value": "2025-01-20", "confidence": 95 },
+  "due_date": { "value": "2025-02-20", "confidence": 90 },
+  "seller": {
+    "name": { "value": "Dott. Mario Bianchi", "confidence": 95 },
+    "vat_number": { "value": "IT09876543210", "confidence": 90 }
+  },
   "amounts": {
     "subtotal": { "value": "3000.00", "confidence": 95 },
     "total_amount": { "value": "3000.00", "confidence": 95 },
     "currency": { "value": "EUR", "confidence": 100 }
-  }
+  },
+  "line_items": [
+    { "description": "Visita specialistica", "quantity": 1, "unit_price": "3000.00", "amount": "3000.00" }
+  ]
 }
 `;
     } else {
@@ -122,11 +175,20 @@ Extract ONLY these fields (if present):
 - subtotal: net amount before tax
 - vat: { rate, amount }
 - total_amount: final amount including VAT
+- line_items: array of items when item table is present
 
 Calculation flow: Subtotal + VAT = Total
 `;
       jsonStructure = `
 {
+  "invoice_number": { "value": "FATT-2025-045", "confidence": 98 },
+  "invoice_date": { "value": "2025-01-15", "confidence": 95 },
+  "due_date": { "value": "2025-02-15", "confidence": 90 },
+  "seller": {
+    "name": { "value": "Acme SRL", "confidence": 95 },
+    "vat_number": { "value": "IT12345678901", "confidence": 98 },
+    "address": { "value": "Via Torino 10, 10121 Milano", "confidence": 85 }
+  },
   "amounts": {
     "subtotal": { "value": "5050.00", "confidence": 95 },
     "vat": { 
@@ -135,7 +197,11 @@ Calculation flow: Subtotal + VAT = Total
     },
     "total_amount": { "value": "6161.00", "confidence": 96 },
     "currency": { "value": "EUR", "confidence": 100 }
-  }
+  },
+  "line_items": [
+    { "description": "Servizio consulenza", "quantity": 1, "unit_price": "3000.00", "amount": "3000.00" },
+    { "description": "Implementazione software", "quantity": 1, "unit_price": "2050.00", "amount": "2050.00" }
+  ]
 }
 `;
     }

@@ -4,6 +4,8 @@ import fs from "fs";
 import { DocumentService } from "../services/document.service.js";
 import { DocumentModel } from "../models/document.model.js";
 import { DocumentResultModel } from "../models/documentResult.model.js";
+import { SupplierModel } from "../models/supplier.model.js";
+import { upsertSupplierFromDocument } from "../services/supplier.service.js";
 import { documentQueue } from "../queues/documentQueue.js";
 import { generateCSV, generateExcel } from "../services/export.service.js";
 import { createBatch, registerDocumentInBatch } from "../services/batchNotification.service.js";
@@ -138,7 +140,10 @@ export const getUserDocuments = async (req, res) => {
     status: req.query.status || null,
     dateFrom: req.query.dateFrom || null,
     dateTo: req.query.dateTo || null,
-    search: req.query.search || null
+    search: req.query.search || null,
+    defective: req.query.defective || null,
+    supplier: req.query.supplier || null,
+    tag: req.query.tag || null
   };
 
   const result = await DocumentService.listUserDocuments(req.user.id, {
@@ -377,11 +382,18 @@ export const exportDocumentsCSV = async (req, res) => {
   
   try {
     const userId = req.user.id;
+    const defectiveOnly = req.query.defective === "only";
 
-    // Ottieni tutti i documenti dell'utente con risultati parsed
     const { documents } = await DocumentModel.findByUser(userId, {
       page: 1,
-      limit: 10000 // export tutti
+      limit: 10000,
+      exportMode: true,
+      filters: {
+        status: "done",
+        ...(defectiveOnly
+          ? { defective: "only" }
+          : { excludeDefective: true, invoiceOnly: true })
+      }
     });
 
     log.info("CSV export started", { userId, documentCount: documents.length });
@@ -407,7 +419,7 @@ export const exportDocumentsCSV = async (req, res) => {
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="documents-${Date.now()}.csv"`
+      `attachment; filename="documents${defectiveOnly ? "-defective" : ""}-${Date.now()}.csv"`
     );
     res.send(csv);
   } catch (err) {
@@ -473,11 +485,18 @@ export const exportDocumentsExcel = async (req, res) => {
   
   try {
     const userId = req.user.id;
+    const defectiveOnly = req.query.defective === "only";
 
-    // Ottieni tutti i documenti dell'utente con risultati parsed
     const { documents } = await DocumentModel.findByUser(userId, {
       page: 1,
-      limit: 10000 // export tutti
+      limit: 10000,
+      exportMode: true,
+      filters: {
+        status: "done",
+        ...(defectiveOnly
+          ? { defective: "only" }
+          : { excludeDefective: true, invoiceOnly: true })
+      }
     });
 
     log.info("Excel export started", { userId, documentCount: documents.length });
@@ -506,7 +525,7 @@ export const exportDocumentsExcel = async (req, res) => {
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="documents-${Date.now()}.xlsx"`
+      `attachment; filename="documents${defectiveOnly ? "-defective" : ""}-${Date.now()}.xlsx"`
     );
     res.send(buffer);
   } catch (err) {
@@ -515,6 +534,36 @@ export const exportDocumentsExcel = async (req, res) => {
       userId: req.user?.id
     });
     res.status(500).json({ message: "Export failed" });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| BULK UNMARK DEFECTIVE
+|--------------------------------------------------------------------------
+*/
+export const bulkUnmarkDefective = async (req, res) => {
+  const log = getRequestLogger(req);
+  
+  try {
+    const userId = req.user.id;
+    const { documentIds } = req.body;
+
+    if (!Array.isArray(documentIds) || documentIds.length === 0) {
+      return res.status(400).json({ message: "documentIds array is required" });
+    }
+
+    const count = await DocumentModel.bulkUnmarkDefective(userId, documentIds);
+
+    log.info("Bulk unmark defective", { userId, count, documentIds });
+
+    res.json({ message: `${count} document(s) unmarked as defective`, count });
+  } catch (err) {
+    logError(err, {
+      operation: "bulkUnmarkDefective",
+      userId: req.user?.id
+    });
+    res.status(500).json({ message: "Operation failed" });
   }
 };
 
@@ -575,6 +624,102 @@ export const unmarkDocumentDefective = async (req, res) => {
       documentId: req.params.id
     });
     res.status(500).json({ message: "Operation failed" });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| UPDATE DOCUMENT SUPPLIER (link documento a fornitore)
+|--------------------------------------------------------------------------
+*/
+export const updateDocumentSupplier = async (req, res) => {
+  const log = getRequestLogger(req);
+
+  try {
+    const documentId = req.params.id;
+    const userId = req.user.id;
+    const { supplier_id } = req.body;
+
+    if (supplier_id === undefined) {
+      return res.status(400).json({ message: "supplier_id is required" });
+    }
+
+    if (supplier_id !== null) {
+      const supplier = await SupplierModel.findById(supplier_id, userId);
+      if (!supplier) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+    }
+
+    await DocumentService.getDocumentById(documentId, userId);
+    await DocumentModel.updateSupplierId(documentId, userId, supplier_id);
+
+    log.info("Document supplier updated", { documentId, supplier_id });
+
+    const doc = await DocumentModel.findById(documentId, userId);
+    res.json(doc);
+  } catch (err) {
+    logError(err, {
+      operation: "updateDocumentSupplier",
+      userId: req.user?.id,
+      documentId: req.params?.id
+    });
+    if (err.message === "Document not found") {
+      return res.status(404).json({ message: "Document not found" });
+    }
+    res.status(500).json({ message: "Operation failed" });
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| SAVE SUPPLIER FROM DOCUMENT SEMANTIC
+|--------------------------------------------------------------------------
+| Crea supplier dai dati seller estratti dal documento e collega al documento.
+| Utile quando il documento ha semantic.seller ma nessun supplier linkato.
+*/
+export const saveSupplierFromSemantic = async (req, res) => {
+  const log = getRequestLogger(req);
+
+  try {
+    const documentId = req.params.id;
+    const userId = req.user.id;
+
+    const doc = await DocumentService.getDocumentById(documentId, userId);
+    const result = await DocumentModel.findById(documentId, userId);
+    const resultData = await DocumentResultModel.findParsedByDocumentId(documentId);
+    if (!resultData?.parsed_json) {
+      return res.status(400).json({ message: "Document has no parsed data yet" });
+    }
+
+    const parsed = typeof resultData.parsed_json === "string"
+      ? JSON.parse(resultData.parsed_json)
+      : resultData.parsed_json;
+    const semantic = parsed?.semantic;
+
+    if (!semantic?.seller) {
+      return res.status(400).json({ message: "No supplier data found in document" });
+    }
+
+    const supplier = await upsertSupplierFromDocument(userId, documentId, semantic);
+    if (!supplier) {
+      return res.status(400).json({ message: "Could not create supplier from document data" });
+    }
+
+    log.info("Supplier saved from document semantic", { documentId, supplierId: supplier.id });
+
+    const updatedDoc = await DocumentModel.findById(documentId, userId);
+    res.json(updatedDoc);
+  } catch (err) {
+    logError(err, {
+      operation: "saveSupplierFromSemantic",
+      userId: req.user?.id,
+      documentId: req.params?.id
+    });
+    if (err.message === "Document not found") {
+      return res.status(404).json({ message: "Document not found" });
+    }
+    res.status(500).json({ message: err.message || "Operation failed" });
   }
 };
 

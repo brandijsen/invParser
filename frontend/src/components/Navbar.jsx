@@ -44,6 +44,9 @@ const Navbar = () => {
                 <Link to="/documents" className="opacity-90 hover:opacity-100">
                   Documents
                 </Link>
+                <Link to="/suppliers" className="opacity-90 hover:opacity-100">
+                  Suppliers
+                </Link>
               </>
             )}
             {user?.role === "admin" && (

@@ -14,10 +14,14 @@ import {
   exportDocumentsCSV,
   exportDocumentsExcel,
   updateDocumentResult,
+  updateDocumentSupplier,
+  saveSupplierFromSemantic,
+  bulkUnmarkDefective,
   markDocumentDefective,
   unmarkDocumentDefective,
   getDefectiveDocuments
 } from "../controllers/document.controller.js";
+import { getDocumentTags, setDocumentTags } from "../controllers/tag.controller.js";
 
 const router = express.Router();
 
@@ -29,12 +33,14 @@ router.get("/export/excel", protect, exportDocumentsExcel);
 
 // Defective documents
 router.get("/defective/list", protect, getDefectiveDocuments);
+router.post("/bulk-unmark-defective", protect, bulkUnmarkDefective);
 
 // Download route (PRIMA di /:id)
 router.get("/:id/download", protect, downloadDocument);
 router.get("/:id/result", protect, getDocumentResult);
 router.get("/:id/raw", protect, getDocumentRaw);
-
+router.get("/:id/tags", protect, getDocumentTags);
+router.patch("/:id/tags", protect, setDocumentTags);
 // Route parametrica generica (DOPO le route specifiche)
 router.get("/:id", protect, getDocumentById);
 
@@ -52,6 +58,7 @@ router.post("/:id/mark-defective", protect, markDocumentDefective);
 router.post("/:id/unmark-defective", protect, unmarkDocumentDefective);
 
 router.patch("/:id/result", protect, updateDocumentResult);
+router.patch("/:id/supplier", protect, updateDocumentSupplier);
 
 router.delete("/:id", protect, deleteDocument);
 

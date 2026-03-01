@@ -1,3 +1,12 @@
+-- =============================================================================
+-- smartLegal - Database Schema (unified migration)
+-- =============================================================================
+-- Fresh install: mysql -u root -p smartlegal < migrations/db.sql
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- Users
+-- -----------------------------------------------------------------------------
 CREATE TABLE users (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -16,6 +25,9 @@ CREATE TABLE users (
 );
 
 
+-- -----------------------------------------------------------------------------
+-- Documents
+-- -----------------------------------------------------------------------------
 CREATE TABLE documents (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -45,6 +57,9 @@ CREATE TABLE documents (
 );
 
 
+-- -----------------------------------------------------------------------------
+-- Document Results
+-- -----------------------------------------------------------------------------
 CREATE TABLE document_results (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -74,6 +89,9 @@ CREATE TABLE document_results (
 );
 
 
+-- -----------------------------------------------------------------------------
+-- Processing Stats
+-- -----------------------------------------------------------------------------
 CREATE TABLE processing_stats (
   id INT AUTO_INCREMENT PRIMARY KEY,
 
@@ -85,3 +103,97 @@ CREATE TABLE processing_stats (
 
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+
+-- -----------------------------------------------------------------------------
+-- Suppliers
+-- -----------------------------------------------------------------------------
+CREATE TABLE suppliers (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+
+  name VARCHAR(255) NOT NULL,
+  vat_number VARCHAR(50) NULL,
+  address VARCHAR(500) NULL,
+  email VARCHAR(150) NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_suppliers_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  INDEX idx_suppliers_user (user_id),
+  INDEX idx_suppliers_vat (user_id, vat_number),
+  INDEX idx_suppliers_name (user_id, name(100))
+);
+
+-- Link document -> supplier
+ALTER TABLE documents
+  ADD COLUMN supplier_id INT NULL AFTER marked_defective_at,
+  ADD CONSTRAINT fk_documents_supplier
+    FOREIGN KEY (supplier_id)
+    REFERENCES suppliers(id)
+    ON DELETE SET NULL,
+  ADD INDEX idx_documents_supplier (supplier_id);
+
+
+-- -----------------------------------------------------------------------------
+-- Tags
+-- -----------------------------------------------------------------------------
+CREATE TABLE tags (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id INT NOT NULL,
+
+  name VARCHAR(100) NOT NULL,
+  color VARCHAR(20) NULL DEFAULT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  CONSTRAINT fk_tags_user
+    FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE,
+
+  UNIQUE KEY uk_tags_user_name (user_id, name),
+  INDEX idx_tags_user (user_id)
+);
+
+CREATE TABLE document_tags (
+  document_id INT NOT NULL,
+  tag_id INT NOT NULL,
+
+  PRIMARY KEY (document_id, tag_id),
+
+  CONSTRAINT fk_dt_document
+    FOREIGN KEY (document_id)
+    REFERENCES documents(id)
+    ON DELETE CASCADE,
+
+  CONSTRAINT fk_dt_tag
+    FOREIGN KEY (tag_id)
+    REFERENCES tags(id)
+    ON DELETE CASCADE,
+
+  INDEX idx_dt_tag (tag_id)
+);
+
+
+-- =============================================================================
+-- LEGACY: Migrazione da vendors a suppliers
+-- =============================================================================
+-- Eseguire SOLO se avete già una tabella vendors e volete migrare a suppliers.
+-- Non eseguire su installazione fresh (questa migrazione fallirà).
+--
+-- 1. Rimuovi FK da documents
+--    ALTER TABLE documents DROP FOREIGN KEY fk_documents_vendor;
+--
+-- 2. Crea suppliers, copia dati, elimina vendors
+--    CREATE TABLE suppliers (...);
+--    INSERT INTO suppliers SELECT * FROM vendors;
+--    DROP TABLE vendors;
+--
+-- 3. Rinomina colonna e FK
+--    ALTER TABLE documents CHANGE COLUMN vendor_id supplier_id INT NULL, ...;

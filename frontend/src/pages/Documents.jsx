@@ -53,7 +53,10 @@ const Documents = () => {
     status: searchParams.get("status") || "all",
     dateFrom: searchParams.get("dateFrom") || "",
     dateTo: searchParams.get("dateTo") || "",
-    search: searchParams.get("search") || ""
+    search: searchParams.get("search") || "",
+    defective: searchParams.get("defective") || "all",
+    supplier: searchParams.get("supplier") || "all",
+    tag: searchParams.get("tag") || "all"
   });
   
   // Paginazione - inizializza dalla URL
@@ -87,7 +90,15 @@ const Documents = () => {
       if (currentFilters.search) {
         params.append("search", currentFilters.search);
       }
-
+      if (currentFilters.defective && currentFilters.defective !== "all") {
+        params.append("defective", currentFilters.defective);
+      }
+      if (currentFilters.supplier && currentFilters.supplier !== "all") {
+        params.append("supplier", currentFilters.supplier);
+      }
+      if (currentFilters.tag && currentFilters.tag !== "all") {
+        params.append("tag", currentFilters.tag);
+      }
       const res = await api.get(`/documents?${params.toString()}`);
       setDocuments(res.data.documents);
       setPagination(res.data.pagination);
@@ -194,6 +205,33 @@ const Documents = () => {
     }
   };
 
+  // Bulk unmark defective
+  const bulkUnmarkDefective = async () => {
+    const defectiveSelected = selectedIds.filter((id) => {
+      const doc = documents.find((d) => d.id === id);
+      return doc?.is_defective === 1;
+    });
+
+    if (defectiveSelected.length === 0) {
+      alert("No defective documents selected");
+      return;
+    }
+
+    setBulkProcessing(true);
+    try {
+      await api.post("/documents/bulk-unmark-defective", {
+        documentIds: defectiveSelected
+      });
+      setSelectedIds([]);
+      await fetchDocuments();
+    } catch (err) {
+      console.error("Bulk unmark failed", err);
+      alert("Operation failed");
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
   useEffect(() => {
     fetchDocuments();
     const interval = setInterval(() => fetchDocuments(pagination.page, filters), 5000);
@@ -218,7 +256,10 @@ const Documents = () => {
       status: "all",
       dateFrom: "",
       dateTo: "",
-      search: ""
+      search: "",
+      defective: "all",
+      supplier: "all",
+      tag: "all"
     };
     setFilters(resetFilters);
     setSelectedIds([]);
@@ -227,7 +268,7 @@ const Documents = () => {
   };
 
   // Aggiorna URL con filtri e pagina corrente
-  const updateURL = ({ page, status, dateFrom, dateTo, search }) => {
+  const updateURL = ({ page, status, dateFrom, dateTo, search, defective, supplier, tag }) => {
     const params = new URLSearchParams();
     
     if (page && page !== 1) params.set("page", page.toString());
@@ -235,26 +276,28 @@ const Documents = () => {
     if (dateFrom) params.set("dateFrom", dateFrom);
     if (dateTo) params.set("dateTo", dateTo);
     if (search) params.set("search", search);
-
+    if (defective && defective !== "all") params.set("defective", defective);
+    if (supplier && supplier !== "all") params.set("supplier", supplier);
+    if (tag && tag !== "all") params.set("tag", tag);
     setSearchParams(params);
   };
 
   // Export functions
-  const handleExport = async (format) => {
+  const handleExport = async (format, defectiveOnly = false) => {
     setExporting(true);
     try {
-      const response = await api.get(`/documents/export/${format}`, {
+      const params = defectiveOnly ? "?defective=only" : "";
+      const response = await api.get(`/documents/export/${format}${params}`, {
         responseType: "blob"
       });
 
-      // Crea download link
+      const ext = format === "csv" ? "csv" : "xlsx";
+      const prefix = defectiveOnly ? "documents-defective" : "documents";
+
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute(
-        "download",
-        `documents-${Date.now()}.${format === "csv" ? "csv" : "xlsx"}`
-      );
+      link.setAttribute("download", `${prefix}-${Date.now()}.${ext}`);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -277,7 +320,7 @@ const Documents = () => {
 
           {/* Export Buttons */}
           {documents.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleExport("csv")}
                 disabled={exporting}
@@ -286,7 +329,6 @@ const Documents = () => {
                 <FiDownload className="w-4 h-4" />
                 {exporting ? "Exporting..." : "Export CSV"}
               </button>
-
               <button
                 onClick={() => handleExport("excel")}
                 disabled={exporting}
@@ -295,6 +337,23 @@ const Documents = () => {
                 <FiDownload className="w-4 h-4" />
                 {exporting ? "Exporting..." : "Export Excel"}
               </button>
+              <span className="text-slate-400 self-center">|</span>
+              <button
+                onClick={() => handleExport("csv", true)}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm font-medium hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FiDownload className="w-4 h-4" />
+                {exporting ? "Exporting..." : "Export Defective CSV"}
+              </button>
+              <button
+                onClick={() => handleExport("excel", true)}
+                disabled={exporting}
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-red-100 border border-red-200 text-red-800 text-sm font-medium hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <FiDownload className="w-4 h-4" />
+                {exporting ? "Exporting..." : "Export Defective Excel"}
+              </button>
             </div>
           )}
         </div>
@@ -302,6 +361,7 @@ const Documents = () => {
         <DocumentUpload onUploaded={fetchDocuments} />
 
         <DocumentFilters
+          filters={filters}
           onFilterChange={handleFilterChange}
           onReset={handleResetFilters}
         />
@@ -321,7 +381,14 @@ const Documents = () => {
                   {selectedIds.length} document(s) selected
                 </span>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={bulkUnmarkDefective}
+                    disabled={bulkProcessing || !selectedIds.some((id) => documents.find((d) => d.id === id)?.is_defective === 1)}
+                    className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bulkProcessing ? "Processing…" : "✓ Unmark Defective"}
+                  </button>
                   <button
                     onClick={bulkRetry}
                     disabled={bulkProcessing}
@@ -329,7 +396,6 @@ const Documents = () => {
                   >
                     {bulkProcessing ? "Processing…" : "🔁 Retry Failed"}
                   </button>
-
                   <button
                     onClick={bulkDelete}
                     disabled={bulkProcessing}
@@ -337,7 +403,6 @@ const Documents = () => {
                   >
                     {bulkProcessing ? "Deleting…" : "🗑 Delete Selected"}
                   </button>
-
                   <button
                     onClick={() => setSelectedIds([])}
                     className="px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50"
@@ -363,6 +428,7 @@ const Documents = () => {
                     <th className="text-left px-6 py-4 font-medium">File</th>
                     <th className="text-left px-6 py-4 font-medium">Uploaded</th>
                     <th className="text-left px-6 py-4 font-medium">Status</th>
+                    <th className="text-left px-6 py-4 font-medium">Supplier</th>
                     <th className="text-left px-6 py-4 font-medium">Badges</th>
                     <th className="text-left px-6 py-4 font-medium">Actions</th>
                   </tr>
@@ -417,17 +483,20 @@ const Documents = () => {
                           </span>
                         </td>
 
+                        {/* Supplier Column */}
+                        <td className="px-6 py-4 text-slate-700">
+                          {doc.supplier_name || "—"}
+                        </td>
+
                         {/* Badges Column */}
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1.5">
-                            {/* 🚨 NEW: Badge per documento NON-fattura */}
                             {parsed?.document_type && parsed.document_type !== 'invoice' && (
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200 w-fit">
                                 <FiXCircle className="w-3 h-3" />
                                 Not Invoice ({parsed.document_type})
                               </span>
                             )}
-                            
                             {doc.is_defective === 1 && (
                               <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-200 w-fit">
                                 <FiXCircle className="w-3 h-3" />

@@ -8,6 +8,8 @@ import { extractSemanticData } from "../services/aiSemanticParser.service.js";
 import { classifyDocument } from "../services/documentClassifier.service.js";
 import { validateExtractedData } from "../services/validationRules.service.js";
 import { markDocumentComplete } from "../services/batchNotification.service.js";
+import { upsertSupplierFromDocument } from "../services/supplier.service.js";
+import { syncScadenzaForDocument } from "../services/scadenzaTags.service.js";
 import logger, { logJob, logError, logValidation } from "../utils/logger.js";
 
 logger.info("Document worker started");
@@ -110,6 +112,28 @@ new Worker(
       };
 
       await DocumentResultModel.updateParsedJson(documentId, finalJson);
+
+      // 📋 Anagrafica fornitori: salva seller da fattura e collega documento
+      if (validationResult.validatedData) {
+        await upsertSupplierFromDocument(
+          document.user_id,
+          documentId,
+          validationResult.validatedData
+        );
+
+        try {
+          await syncScadenzaForDocument(
+            documentId,
+            document.user_id,
+            validationResult.validatedData
+          );
+        } catch (scadenzaErr) {
+          logError(scadenzaErr, {
+            ...jobContext,
+            operation: "sync_scadenza_tags"
+          });
+        }
+      }
 
       await DocumentModel.updateStatus(documentId, "done");
 

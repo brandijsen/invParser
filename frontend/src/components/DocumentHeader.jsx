@@ -1,4 +1,4 @@
-import { FiFileText, FiCalendar, FiHash, FiDownload, FiEdit2 } from "react-icons/fi";
+import { FiFileText, FiCalendar, FiHash, FiDownload, FiEdit2, FiBriefcase } from "react-icons/fi";
 import api from "../api/axios";
 import { useState } from "react";
 
@@ -70,11 +70,40 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
             <span className="text-sm">{document?.original_name || "—"}</span>
           </div>
 
+          {/* Invoice Number & Date (se estratti) */}
+          {(parsed?.semantic?.invoice_number || parsed?.semantic?.invoice_date) && (
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-slate-600">
+              {parsed?.semantic?.invoice_number && (
+                <span className="text-sm">
+                  Invoice: <strong>{parsed.semantic.invoice_number?.value ?? parsed.semantic.invoice_number}</strong>
+                </span>
+              )}
+              {parsed?.semantic?.invoice_date && (
+                <span className="text-sm">
+                  Date: <strong>{parsed.semantic.invoice_date?.value ?? parsed.semantic.invoice_date}</strong>
+                </span>
+              )}
+            </div>
+          )}
+
           {/* Upload Date */}
           <div className="flex items-center gap-2 text-slate-600">
             <FiCalendar size={16} className="text-slate-400" />
             <span className="text-sm">Uploaded: {formatDate(document?.uploaded_at)}</span>
           </div>
+
+          {/* Supplier */}
+          {document?.supplier && (
+            <div className="flex items-center gap-2 text-slate-600">
+              <FiBriefcase size={16} className="text-slate-400" />
+              <span className="text-sm">
+                Supplier: <strong>{document.supplier.name}</strong>
+                {document.supplier.vat_number && (
+                  <span className="text-slate-500 ml-1">({document.supplier.vat_number})</span>
+                )}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-3">

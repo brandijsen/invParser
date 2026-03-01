@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiAlertTriangle, FiCheckCircle } from "react-icons/fi";
+import { FiAlertTriangle, FiCheckCircle, FiBriefcase } from "react-icons/fi";
 import api from "../api/axios";
 
 import DocumentHeader from "../components/DocumentHeader";
 import PrimaryAmountCard from "../components/PrimaryAmountCard";
 import FinancialBreakdown from "../components/FinancialBreakdown";
 import RedFlagsAlert from "../components/RedFlagsAlert";
+import PdfViewer from "../components/PdfViewer";
+import TagSelector from "../components/TagSelector";
 
-const TABS = ["raw", "json"];
+const TABS = ["pdf", "raw", "json"];
 
 const DocumentDetail = () => {
   const { id } = useParams();
@@ -18,7 +20,8 @@ const DocumentDetail = () => {
   const [resultMetadata, setResultMetadata] = useState(null);
   const [validationFlags, setValidationFlags] = useState([]); // ✅ NEW
   const [raw, setRaw] = useState("");
-  const [tab, setTab] = useState("raw");
+  const [tab, setTab] = useState("pdf");
+  const [documentTags, setDocumentTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null); // "not_found" | "processing" | null
 
@@ -30,9 +33,10 @@ const DocumentDetail = () => {
         const resDoc = await api.get(`/documents/${id}`);
         setDocument(resDoc.data);
 
-        const [resParsed, resRaw] = await Promise.allSettled([
+        const [resParsed, resRaw, resTags] = await Promise.allSettled([
           api.get(`/documents/${id}/result`),
           api.get(`/documents/${id}/raw`),
+          api.get(`/documents/${id}/tags`),
         ]);
 
         if (resParsed.status === "fulfilled") {
@@ -47,6 +51,7 @@ const DocumentDetail = () => {
           setValidationFlags(parsedData?.validation_flags || []);
         }
         if (resRaw.status === "fulfilled") setRaw(resRaw.value.data.raw_text);
+        if (resTags.status === "fulfilled") setDocumentTags(resTags.value.data.tags || []);
 
         if (resParsed.status === "rejected" && resRaw.status === "rejected") {
           const status = resDoc.data?.status;
@@ -69,6 +74,11 @@ const DocumentDetail = () => {
     fetchAll();
   }, [id]);
 
+  const refreshDocument = async () => {
+    const resDoc = await api.get(`/documents/${id}`);
+    setDocument(resDoc.data);
+  };
+
   const handleMarkDefective = async () => {
     try {
       if (document.is_defective) {
@@ -77,9 +87,7 @@ const DocumentDetail = () => {
         await api.post(`/documents/${id}/mark-defective`);
       }
       
-      // Refresh document
-      const resDoc = await api.get(`/documents/${id}`);
-      setDocument(resDoc.data);
+      await refreshDocument();
     } catch (err) {
       console.error("Failed to mark/unmark defective:", err);
       alert("Operation failed");
@@ -98,10 +106,17 @@ const DocumentDetail = () => {
 
   if (error === "processing") {
     return (
-      <div className="pt-32 px-8">
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-amber-800">
-          <p className="font-medium">Document is being processed</p>
-          <p className="text-sm mt-1">Please wait a moment and refresh the page.</p>
+      <div className="pt-24 pb-24 min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+        <div className="max-w-5xl mx-auto px-6 sm:px-8 space-y-6">
+          <DocumentHeader document={document} parsed={null} resultMetadata={null} />
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-amber-800">
+            <p className="font-medium">Document is being processed</p>
+            <p className="text-sm mt-1">Please wait a moment and refresh the page.</p>
+          </div>
+          <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+            <h3 className="px-6 py-4 border-b border-slate-200 font-medium text-slate-900">Document Preview</h3>
+            <PdfViewer documentId={id} className="min-h-[500px]" />
+          </div>
         </div>
       </div>
     );
@@ -119,7 +134,7 @@ const DocumentDetail = () => {
 
   const amounts = parsed?.semantic?.amounts;
 
-  // ✅ NEW: Check se documento NON è una fattura
+  // Check se documento NON è una fattura
   const isNotInvoice = parsed?.document_type && parsed.document_type !== 'invoice';
   const wrongDocumentFlag = validationFlags.find(f => f.type === 'wrong_document_type');
 
@@ -152,6 +167,48 @@ const DocumentDetail = () => {
                   📌 Please upload only invoices. This document should be removed or marked as defective.
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tags */}
+        <div className="bg-white rounded-xl border border-slate-200 p-6">
+          <TagSelector
+            documentId={id}
+            documentTags={documentTags}
+            onTagsChange={setDocumentTags}
+          />
+        </div>
+
+        {/* Supplier card */}
+        {(document?.supplier || parsed?.semantic?.seller) && (
+          <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <FiBriefcase className="text-slate-500" size={20} />
+              <h3 className="text-lg font-semibold text-slate-900">Supplier</h3>
+            </div>
+            <div className="space-y-1">
+              <p className="font-medium text-slate-900">
+                {document?.supplier?.name ??
+                  (parsed?.semantic?.seller?.name?.value ?? parsed?.semantic?.seller?.name)}
+              </p>
+              {(document?.supplier?.vat_number ??
+                parsed?.semantic?.seller?.vat_number?.value ??
+                parsed?.semantic?.seller?.vat_number) && (
+                <p className="text-sm text-slate-500">
+                  VAT:{" "}
+                  {document?.supplier?.vat_number ??
+                    parsed?.semantic?.seller?.vat_number?.value ??
+                    parsed?.semantic?.seller?.vat_number}
+                </p>
+              )}
+              {(parsed?.semantic?.seller?.address?.value ??
+                parsed?.semantic?.seller?.address) && (
+                <p className="text-sm text-slate-500">
+                  {parsed?.semantic?.seller?.address?.value ??
+                    parsed?.semantic?.seller?.address}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -228,7 +285,7 @@ const DocumentDetail = () => {
           </div>
         )}
 
-        {/* Debug Tabs */}
+        {/* Document tabs: PDF, Raw, JSON */}
         <div className="pt-4">
           <div className="flex gap-2 mb-4">
             {TABS.map(t => (
@@ -241,22 +298,67 @@ const DocumentDetail = () => {
                     : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
                 }`}
               >
-                {t === "raw" ? "Raw Text" : "Debug JSON"}
+                {t === "pdf" ? "PDF" : t === "raw" ? "Raw Text" : "Debug JSON"}
               </button>
             ))}
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow border border-slate-200">
+          <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+            {tab === "pdf" && <PdfViewer documentId={id} className="min-h-[600px]" />}
+
             {tab === "json" && (
-              <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono overflow-x-auto">
-                {parsed ? JSON.stringify(parsed, null, 2) : "No parsed data available"}
-              </pre>
+              <div className="p-6">
+                <pre className="text-xs text-slate-600 whitespace-pre-wrap font-mono overflow-x-auto">
+                  {parsed || document?.supplier
+                    ? JSON.stringify(
+                        (() => {
+                          const seller = parsed?.semantic?.seller;
+                          const getVal = (o) =>
+                            o && typeof o === "object" && "value" in o ? o.value : o;
+                          const supplierData = document?.supplier
+                            ? {
+                                id: document.supplier.id,
+                                name: document.supplier.name,
+                                vat_number: document.supplier.vat_number,
+                                address: document.supplier.address ?? getVal(seller?.address) ?? null,
+                              }
+                            : seller
+                            ? {
+                                name: getVal(seller.name),
+                                vat_number: getVal(seller.vat_number),
+                                address: getVal(seller.address),
+                              }
+                            : null;
+                          const { semantic, ...rest } = parsed || {};
+                          const semanticNoSeller =
+                            semantic && typeof semantic === "object"
+                              ? Object.fromEntries(
+                                  Object.entries(semantic).filter(([k]) => k !== "seller")
+                                )
+                              : semantic;
+                          return {
+                            supplier: supplierData,
+                            ...rest,
+                            ...(semanticNoSeller &&
+                              Object.keys(semanticNoSeller).length > 0 && {
+                                semantic: semanticNoSeller,
+                              }),
+                          };
+                        })(),
+                        null,
+                        2
+                      )
+                    : "No parsed data available"}
+                </pre>
+              </div>
             )}
 
             {tab === "raw" && (
-              <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto">
-                {raw || "No raw text available"}
-              </pre>
+              <div className="p-6">
+                <pre className="text-xs text-slate-700 whitespace-pre-wrap font-mono overflow-x-auto max-h-96 overflow-y-auto">
+                  {raw || "No raw text available"}
+                </pre>
+              </div>
             )}
           </div>
         </div>
