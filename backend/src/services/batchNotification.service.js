@@ -249,8 +249,8 @@ async function sendBatchSummaryEmail(userEmail, userName, summary) {
   const html = getBatchEmailTemplate(userName, summary);
   
   const subject = summary.failed.length > 0 
-    ? `📊 ${summary.completed.length}/${summary.total} documenti processati`
-    : `✅ ${summary.total} documenti processati con successo`;
+    ? `📊 ${summary.completed.length}/${summary.total} documents processed`
+    : `✅ ${summary.total} documents processed successfully`;
   
   const mailOptions = {
     from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
@@ -428,42 +428,42 @@ function getBatchEmailTemplate(userName, summary) {
   <div class="container">
     <div class="header">
       <div class="icon">📊</div>
-      <h1>Batch Processing Completato</h1>
+      <h1>Batch Processing Complete</h1>
     </div>
     
     <div class="content">
-      <p class="greeting">Ciao ${userName},</p>
+      <p class="greeting">Hello ${userName},</p>
       
       <div class="summary-box">
         <div class="summary-number">${total}</div>
-        <div class="summary-text">Documenti processati</div>
+        <div class="summary-text">Documents processed</div>
       </div>
       
       <div class="stats">
         ${completed.length > 0 ? `
         <div class="stat-card success">
           <div class="stat-number">${completed.length}</div>
-          <div class="stat-label">✅ Successo</div>
+          <div class="stat-label">✅ Success</div>
         </div>
         ` : ''}
         
         ${failed.length > 0 ? `
         <div class="stat-card error">
           <div class="stat-number">${failed.length}</div>
-          <div class="stat-label">❌ Errori</div>
+          <div class="stat-label">❌ Failed</div>
         </div>
         ` : ''}
         
         ${pending.length > 0 ? `
         <div class="stat-card pending">
           <div class="stat-number">${pending.length}</div>
-          <div class="stat-label">⏳ In corso</div>
+          <div class="stat-label">⏳ Pending</div>
         </div>
         ` : ''}
       </div>
       
       ${completed.length > 0 ? `
-      <div class="section-title">✅ Documenti Pronti</div>
+      <div class="section-title">✅ Documents Ready</div>
       <div class="document-list">
         ${completed.slice(0, 10).map(doc => `
           <div class="document-item">
@@ -472,14 +472,14 @@ function getBatchEmailTemplate(userName, summary) {
         `).join('')}
         ${completed.length > 10 ? `
           <div class="document-item" style="border-left-color: #ccc; font-style: italic;">
-            ... e altri ${completed.length - 10} documenti
+            ... and ${completed.length - 10} more documents
           </div>
         ` : ''}
       </div>
       ` : ''}
       
       ${failed.length > 0 ? `
-      <div class="section-title">❌ Documenti con Errori</div>
+      <div class="section-title">❌ Documents with Errors</div>
       <div class="document-list">
         ${failed.map(doc => `
           <div class="document-item failed">
@@ -490,7 +490,7 @@ function getBatchEmailTemplate(userName, summary) {
       ` : ''}
       
       ${pending.length > 0 ? `
-      <div class="section-title">⏳ Ancora in Processing</div>
+      <div class="section-title">⏳ Still Processing</div>
       <div class="document-list">
         ${pending.map(doc => `
           <div class="document-item pending">
@@ -501,14 +501,14 @@ function getBatchEmailTemplate(userName, summary) {
       ` : ''}
       
       <center>
-        <a href="${dashboardUrl}/documents" class="button">Vai ai Documenti</a>
+        <a href="${dashboardUrl}/documents" class="button">Go to Documents</a>
       </center>
     </div>
     
     <div class="footer">
       <p>
-        Questa è una notifica automatica da <strong>SmartLegal</strong><br>
-        <a href="${dashboardUrl}">Vai alla Dashboard</a>
+        This is an automated notification from <strong>SmartLegal</strong><br>
+        <a href="${dashboardUrl}">Go to Dashboard</a>
       </p>
     </div>
   </div>

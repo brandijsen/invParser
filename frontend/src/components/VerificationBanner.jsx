@@ -24,7 +24,7 @@ const VerificationBanner = () => {
   if (!user || user.verified === 1 || !visible) return null;
 
   return (
-    <div className="fixed top-16 left-0 w-full z-50 bg-yellow-100 border-b border-yellow-300 py-3 text-center text-sm text-yellow-900">
+    <div className="fixed top-14 sm:top-16 left-0 w-full z-40 bg-yellow-100 border-b border-yellow-300 py-2 sm:py-3 px-4 text-center text-xs sm:text-sm text-yellow-900">
       {!emailSent ? (
         <>
           <span className="font-semibold">

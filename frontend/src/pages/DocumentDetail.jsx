@@ -97,19 +97,19 @@ const DocumentDetail = () => {
   const hasValidationIssues = validationFlags.length > 0;
 
   if (loading) {
-    return <div className="pt-32 px-8">Loading…</div>;
+    return <div className="pt-24 sm:pt-32 px-4 sm:px-8">Loading…</div>;
   }
 
   if (error === "not_found") {
-    return <div className="pt-32 px-8 text-red-600">Document not found</div>;
+    return <div className="pt-24 sm:pt-32 px-4 sm:px-8 text-red-600">Document not found</div>;
   }
 
   if (error === "processing") {
     return (
-      <div className="pt-24 pb-24 min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
-        <div className="max-w-5xl mx-auto px-6 sm:px-8 space-y-6">
+      <div className="pt-20 sm:pt-24 pb-16 sm:pb-24 min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
           <DocumentHeader document={document} parsed={null} resultMetadata={null} />
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-amber-800">
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 sm:p-6 text-amber-800 text-sm sm:text-base">
             <p className="font-medium">Document is being processed</p>
             <p className="text-sm mt-1">Please wait a moment and refresh the page.</p>
           </div>
@@ -124,8 +124,8 @@ const DocumentDetail = () => {
 
   if (!parsed && !raw) {
     return (
-      <div className="pt-32 px-8">
-        <div className="bg-slate-100 rounded-lg p-6 text-slate-700">
+      <div className="pt-24 sm:pt-32 px-4 sm:px-8">
+        <div className="bg-slate-100 rounded-lg p-4 sm:p-6 text-slate-700 text-sm sm:text-base">
           Result not available yet. The document may still be processing.
         </div>
       </div>
@@ -139,8 +139,8 @@ const DocumentDetail = () => {
   const wrongDocumentFlag = validationFlags.find(f => f.type === 'wrong_document_type');
 
   return (
-    <div className="pt-24 pb-24 min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
-      <div className="max-w-5xl mx-auto px-6 sm:px-8 space-y-6">
+    <div className="pt-20 sm:pt-24 pb-16 sm:pb-24 min-h-screen bg-linear-to-br from-slate-50 to-slate-100">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
 
         {/* Header */}
         <DocumentHeader 

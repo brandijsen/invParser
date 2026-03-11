@@ -41,11 +41,11 @@ const Suppliers = () => {
   };
 
   return (
-    <div className="pt-24 pb-24 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="max-w-4xl mx-auto px-6 sm:px-8">
+    <div className="pt-20 sm:pt-24 pb-16 sm:pb-24 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
             <FiBriefcase className="text-emerald-600" />
             Suppliers
           </h1>
@@ -81,7 +81,7 @@ const Suppliers = () => {
           ) : (
             <ul className="divide-y divide-slate-100">
               {suppliers.map((s) => (
-                <li key={s.id} className="flex items-center justify-between gap-4 px-6 py-4 hover:bg-slate-50 transition-colors group">
+                <li key={s.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 hover:bg-slate-50 transition-colors group">
                   <button
                     type="button"
                     onClick={() => openDetail(s)}
@@ -110,8 +110,8 @@ const Suppliers = () => {
 
       {/* Modal View Supplier Details */}
       {detailModalOpen && selectedSupplier && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full my-auto">
             <div className="flex items-center justify-between p-6 border-b border-slate-200">
               <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                 <FiBriefcase className="text-emerald-600" />

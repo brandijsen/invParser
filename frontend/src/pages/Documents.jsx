@@ -313,10 +313,10 @@ const Documents = () => {
   const hasSelection = selectedIds.length > 0;
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
-      <div className="max-w-6xl mx-auto px-8 space-y-10">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-semibold">Your documents</h1>
+    <div className="pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h1 className="text-2xl sm:text-3xl font-semibold">Your documents</h1>
 
           {/* Export Buttons */}
           {documents.length > 0 && (
@@ -337,7 +337,7 @@ const Documents = () => {
                 <FiDownload className="w-4 h-4" />
                 {exporting ? "Exporting..." : "Export Excel"}
               </button>
-              <span className="text-slate-400 self-center">|</span>
+              <span className="text-slate-400 self-center hidden sm:inline">|</span>
               <button
                 onClick={() => handleExport("csv", true)}
                 disabled={exporting}
@@ -376,7 +376,7 @@ const Documents = () => {
           <>
             {/* Bulk Actions Bar */}
             {hasSelection && (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center justify-between">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-sm font-medium text-emerald-800">
                   {selectedIds.length} document(s) selected
                 </span>
@@ -413,8 +413,8 @@ const Documents = () => {
               </div>
             )}
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="bg-white rounded-lg shadow overflow-x-auto">
+              <table className="w-full text-sm min-w-[640px]">
                 <thead className="bg-slate-50 border-b">
                   <tr>
                     <th className="px-6 py-4 text-left">

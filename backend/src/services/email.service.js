@@ -122,14 +122,14 @@ const getSuccessEmailTemplate = (userName, documentName, documentId) => {
   <div class="container">
     <div class="header">
       <div class="icon">✅</div>
-      <h1>Documento Processato</h1>
+      <h1>Document Processed</h1>
     </div>
     
     <div class="content">
-      <p class="greeting">Ciao ${userName},</p>
+      <p class="greeting">Hello ${userName},</p>
       
       <p class="message">
-        Il tuo documento è stato processato con successo! Tutti i dati sono stati estratti e sono pronti per la revisione.
+        Your document has been processed successfully. All data has been extracted and is ready for review.
       </p>
       
       <div class="document-name">
@@ -137,18 +137,18 @@ const getSuccessEmailTemplate = (userName, documentName, documentId) => {
       </div>
       
       <p class="message">
-        Puoi ora visualizzare i dati estratti, verificare l'accuratezza e procedere con l'archiviazione.
+        You can now view the extracted data, verify accuracy, and proceed with archiving.
       </p>
       
       <center>
-        <a href="${dashboardUrl}" class="button">Visualizza Documento</a>
+        <a href="${dashboardUrl}" class="button">View Document</a>
       </center>
     </div>
     
     <div class="footer">
       <p>
-        Questa è una notifica automatica da <strong>SmartLegal</strong><br>
-        <a href="${process.env.FRONTEND_URL}">Vai alla Dashboard</a>
+        This is an automated notification from <strong>SmartLegal</strong><br>
+        <a href="${process.env.FRONTEND_URL}">Go to Dashboard</a>
       </p>
     </div>
   </div>
@@ -283,14 +283,14 @@ const getErrorEmailTemplate = (userName, documentName, documentId, errorMessage)
   <div class="container">
     <div class="header">
       <div class="icon">❌</div>
-      <h1>Errore Processing</h1>
+      <h1>Processing Error</h1>
     </div>
     
     <div class="content">
-      <p class="greeting">Ciao ${userName},</p>
+      <p class="greeting">Hello ${userName},</p>
       
       <p class="message">
-        Purtroppo si è verificato un errore durante il processing del tuo documento.
+        An error occurred while processing your document.
       </p>
       
       <div class="document-name">
@@ -299,34 +299,34 @@ const getErrorEmailTemplate = (userName, documentName, documentId, errorMessage)
       
       ${errorMessage ? `
       <div class="error-box">
-        <strong>Dettagli errore:</strong><br>
+        <strong>Error details:</strong><br>
         ${errorMessage}
       </div>
       ` : ''}
       
       <div class="tips">
-        <h3>💡 Possibili soluzioni:</h3>
+        <h3>💡 Possible solutions:</h3>
         <ul>
-          <li>Verifica che il file sia un PDF valido e non corrotto</li>
-          <li>Assicurati che il documento contenga testo estraibile (non solo immagini)</li>
-          <li>Controlla che il file non sia protetto da password</li>
-          <li>Se il problema persiste, contatta il supporto</li>
+          <li>Ensure the file is a valid, non-corrupted PDF</li>
+          <li>Make sure the document contains extractable text (not only images)</li>
+          <li>Check that the file is not password-protected</li>
+          <li>If the problem persists, contact support</li>
         </ul>
       </div>
       
       <p class="message">
-        Puoi riprovare caricando nuovamente il documento.
+        You can try again by re-uploading the document.
       </p>
       
       <center>
-        <a href="${dashboardUrl}" class="button">Vai ai Documenti</a>
+        <a href="${dashboardUrl}" class="button">Go to Documents</a>
       </center>
     </div>
     
     <div class="footer">
       <p>
-        Questa è una notifica automatica da <strong>SmartLegal</strong><br>
-        <a href="${process.env.FRONTEND_URL}">Vai alla Dashboard</a>
+        This is an automated notification from <strong>SmartLegal</strong><br>
+        <a href="${process.env.FRONTEND_URL}">Go to Dashboard</a>
       </p>
     </div>
   </div>
@@ -345,13 +345,13 @@ const getProfileUpdatedTemplate = (userName, changesSummary) => {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
   <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-    <h2 style="color: #059669; margin-top: 0;">Profilo aggiornato</h2>
-    <p>Ciao ${userName},</p>
-    <p>Il tuo profilo DocuExtract è stato modificato con successo.</p>
+    <h2 style="color: #059669; margin-top: 0;">Profile Updated</h2>
+    <p>Hello ${userName},</p>
+    <p>Your SmartLegal profile has been updated successfully.</p>
     ${changesSummary ? `<p style="background: #f0fdf4; padding: 12px; border-radius: 8px; border-left: 4px solid #059669;">${changesSummary}</p>` : ""}
-    <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">Se non sei stato tu a effettuare questa modifica, contatta subito il supporto.</p>
+    <p style="color: #64748b; font-size: 14px; margin-bottom: 0;">If you did not make this change, please contact support immediately.</p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">DocuExtract – notifica automatica</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">SmartLegal – automated notification</p>
   </div>
 </body>
 </html>`;
@@ -367,14 +367,14 @@ const getPasswordChangedTemplate = (userName) => {
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
   <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-    <h2 style="color: #059669; margin-top: 0;">Password modificata</h2>
-    <p>Ciao ${userName},</p>
-    <p>La password del tuo account DocuExtract è stata modificata con successo.</p>
+    <h2 style="color: #059669; margin-top: 0;">Password Changed</h2>
+    <p>Hello ${userName},</p>
+    <p>Your SmartLegal account password has been changed successfully.</p>
     <p style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #dc2626; color: #991b1b;">
-      Se non hai effettuato tu questa modifica, qualcuno potrebbe aver avuto accesso al tuo account. Cambia subito la password e contatta il supporto.
+      If you did not make this change, someone may have accessed your account. Change your password immediately and contact support.
     </p>
     <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
-    <p style="color: #94a3b8; font-size: 12px; margin: 0;">DocuExtract – notifica automatica</p>
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">SmartLegal – automated notification</p>
   </div>
 </body>
 </html>`;
@@ -386,9 +386,9 @@ const getPasswordChangedTemplate = (userName) => {
 export async function sendProfileUpdatedEmail(userEmail, userName, changesSummary = null) {
   try {
     const mailOptions = {
-      from: `"DocuExtract" <${process.env.EMAIL_FROM}>`,
+      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: "Profilo aggiornato – DocuExtract",
+      subject: "Profile updated – SmartLegal",
       html: getProfileUpdatedTemplate(userName, changesSummary),
     };
     await transporter.sendMail(mailOptions);
@@ -404,14 +404,61 @@ export async function sendProfileUpdatedEmail(userEmail, userName, changesSummar
 }
 
 /**
+ * Template email per conferma eliminazione account
+ */
+const getDeleteAccountTemplate = (userName, confirmLink) => {
+  return `
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; margin: 0; padding: 20px;">
+  <div style="max-width: 560px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+    <h2 style="color: #dc2626; margin-top: 0;">Confirm Account Deletion</h2>
+    <p>Hello ${userName},</p>
+    <p>You have requested to delete your SmartLegal account. Click the button below to confirm. This link expires in 24 hours.</p>
+    <p style="margin: 24px 0;">
+      <a href="${confirmLink}" style="display: inline-block; padding: 12px 24px; background: #dc2626; color: white !important; text-decoration: none; border-radius: 8px; font-weight: 600;">Delete my account</a>
+    </p>
+    <p style="color: #64748b; font-size: 14px;">If you did not request this deletion, ignore this email. Your account will remain active.</p>
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;">
+    <p style="color: #94a3b8; font-size: 12px; margin: 0;">SmartLegal – automated notification</p>
+  </div>
+</body>
+</html>`;
+};
+
+/**
+ * Invia email con link per confermare eliminazione account
+ */
+export async function sendDeleteAccountEmail(userEmail, userName, confirmLink) {
+  try {
+    const mailOptions = {
+      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
+      to: userEmail,
+      subject: "Confirm account deletion – SmartLegal",
+      html: getDeleteAccountTemplate(userName, confirmLink),
+    };
+    await transporter.sendMail(mailOptions);
+    return { success: true };
+  } catch (error) {
+    logError(error, {
+      operation: "sendDeleteAccountEmail",
+      service: "smtp",
+      userEmail,
+    });
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Invia email quando la password viene modificata
  */
 export async function sendPasswordChangedEmail(userEmail, userName) {
   try {
     const mailOptions = {
-      from: `"DocuExtract" <${process.env.EMAIL_FROM}>`,
+      from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: "Password modificata – DocuExtract",
+      subject: "Password changed – SmartLegal",
       html: getPasswordChangedTemplate(userName),
     };
     await transporter.sendMail(mailOptions);
@@ -440,7 +487,7 @@ export async function sendDocumentProcessedEmail(userEmail, userName, documentNa
     const mailOptions = {
       from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: `✅ Documento processato: ${documentName}`,
+      subject: `✅ Document processed: ${documentName}`,
       html: getSuccessEmailTemplate(userName, documentName, documentId),
     };
 
@@ -479,7 +526,7 @@ export async function sendDocumentErrorEmail(userEmail, userName, documentName, 
     const mailOptions = {
       from: `"SmartLegal" <${process.env.EMAIL_FROM}>`,
       to: userEmail,
-      subject: `❌ Errore processing: ${documentName}`,
+      subject: `❌ Processing error: ${documentName}`,
       html: getErrorEmailTemplate(userName, documentName, documentId, errorMessage),
     };
 

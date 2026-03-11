@@ -1,8 +1,15 @@
 -- =============================================================================
 -- smartLegal - Database Schema (unified migration)
 -- =============================================================================
--- Fresh install: mysql -u root -p smartlegal < migrations/db.sql
+-- Uso:
+--   Fresh install:  mysql -u root -p smartlegal < migrations/db.sql
+--   DB esistente:  mysql -u root -p smartlegal < migrations/db.sql
+--   (le migrazioni sono idempotenti, sicure da rieseguire)
 -- =============================================================================
+
+-- Crea DB se non esiste
+CREATE DATABASE IF NOT EXISTS smartlegal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE smartlegal;
 
 -- -----------------------------------------------------------------------------
 -- Users
@@ -14,12 +21,16 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_path VARCHAR(255) NULL,
 
   password VARCHAR(255) NULL,
+  auth_provider ENUM('email', 'google') NOT NULL DEFAULT 'email',
 
   verified TINYINT(1) NOT NULL DEFAULT 0,
   verification_token VARCHAR(255) DEFAULT NULL,
 
   reset_token VARCHAR(255) DEFAULT NULL,
   reset_token_expiry DATETIME DEFAULT NULL,
+
+  delete_token VARCHAR(255) DEFAULT NULL,
+  delete_token_expiry DATETIME DEFAULT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -193,10 +204,25 @@ BEGIN
     EXECUTE stmt;
     DEALLOCATE PREPARE stmt;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'auth_provider') THEN
+    ALTER TABLE users ADD COLUMN auth_provider ENUM('email', 'google') NOT NULL DEFAULT 'email' AFTER password;
+  END IF;
+  -- reset_token / reset_token_expiry (forgot password)
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'reset_token') THEN
+    ALTER TABLE users ADD COLUMN reset_token VARCHAR(255) DEFAULT NULL;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'reset_token_expiry') THEN
+    ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME DEFAULT NULL;
+  END IF;
+  -- delete_token / delete_token_expiry (cancellazione account via link email)
+  IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'delete_token') THEN
+    ALTER TABLE users ADD COLUMN delete_token VARCHAR(255) DEFAULT NULL;
+    ALTER TABLE users ADD COLUMN delete_token_expiry DATETIME DEFAULT NULL;
+  END IF;
 END //
 DELIMITER ;
 CALL _migrate_smartlegal();
-DROP PROCEDURE _migrate_smartlegal;
+DROP PROCEDURE IF EXISTS _migrate_smartlegal;
 
 -- =============================================================================
 -- LEGACY: Migrazione da vendors a suppliers

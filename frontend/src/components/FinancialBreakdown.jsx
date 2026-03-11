@@ -41,7 +41,7 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   // Professional fee calculation
   if (documentSubtype === "professional_fee") {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <FiDollarSign className="text-emerald-600" />
           Financial Breakdown
@@ -97,7 +97,7 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   // Reverse charge (cross-border, no VAT)
   if (documentSubtype === "reverse_charge") {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <FiDollarSign className="text-emerald-600" />
           Financial Breakdown
@@ -131,7 +131,7 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   // Tax exempt (no VAT)
   if (documentSubtype === "tax_exempt") {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <FiDollarSign className="text-emerald-600" />
           Financial Breakdown
@@ -164,7 +164,7 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
 
   // Standard invoice (default)
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
+    <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
         <FiDollarSign className="text-emerald-600" />
         Financial Breakdown

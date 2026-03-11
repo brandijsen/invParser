@@ -5,6 +5,9 @@ import {
   me,
   updateProfile,
   changePassword,
+  exportData,
+  requestDeleteAccount,
+  confirmDeleteAccount,
   uploadAvatar as uploadAvatarController,
   getAvatar,
   sendVerificationEmail,
@@ -45,6 +48,9 @@ router.post(
   uploadAvatarController
 );
 router.post("/change-password", protect, changePassword);
+router.get("/export-data", protect, exportData);
+router.post("/request-delete", protect, requestDeleteAccount);
+router.get("/confirm-delete/:token", confirmDeleteAccount);
 
 // EMAIL VERIFY
 router.post("/send-verification", protect, sendVerificationEmail);

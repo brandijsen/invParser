@@ -42,13 +42,13 @@ const PrimaryAmountCard = ({ amounts, documentSubtype }) => {
   const currency = extractValue(amounts.currency) || "€";
 
   return (
-    <div className="bg-linear-to-br from-emerald-500 to-emerald-600 rounded-xl p-8 text-white shadow-lg">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wider opacity-90 mb-2">
+    <div className="bg-linear-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-medium uppercase tracking-wider opacity-90 mb-1 sm:mb-2">
             {primaryLabel}
           </p>
-          <p className="text-4xl font-bold">
+          <p className="text-2xl sm:text-3xl lg:text-4xl font-bold truncate">
             {currency} {primaryAmount}
           </p>
         </div>

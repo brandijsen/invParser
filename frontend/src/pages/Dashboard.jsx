@@ -54,8 +54,8 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
-        <div className="max-w-7xl mx-auto px-8">
+      <div className="pt-24 sm:pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="text-slate-600">Loading dashboard...</div>
         </div>
       </div>
@@ -89,12 +89,12 @@ const Dashboard = () => {
     .join(" • ");
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
-      <div className="max-w-7xl mx-auto px-8 space-y-8">
+    <div className="pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-semibold text-slate-900">Dashboard</h1>
-          <p className="text-slate-600 mt-1">Overview of your documents and statistics</p>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900">Dashboard</h1>
+          <p className="text-slate-600 mt-1 text-sm sm:text-base">Overview of your documents and statistics</p>
         </div>
 
         {/* KPI Cards */}
@@ -228,14 +228,14 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-linear-to-r from-emerald-50 to-emerald-100 rounded-lg border border-emerald-200 p-6">
-          <h2 className="text-lg font-semibold text-emerald-900 mb-2">
+        <div className="bg-linear-to-r from-emerald-50 to-emerald-100 rounded-lg border border-emerald-200 p-4 sm:p-6">
+          <h2 className="text-base sm:text-lg font-semibold text-emerald-900 mb-2">
             Quick Actions
           </h2>
           <p className="text-sm text-emerald-700 mb-4">
             Ready to manage your documents?
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-2 sm:gap-3">
             <a
               href="/documents"
               className="px-4 py-2 bg-emerald-600 text-white rounded-md text-sm font-medium hover:bg-emerald-700 transition-colors"
