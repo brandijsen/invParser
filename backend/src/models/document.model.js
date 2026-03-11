@@ -20,10 +20,12 @@ export const DocumentModel = {
     };
   },
 
-  async findByUser(userId, { page = 1, limit = 10, filters = {} } = {}) {
+  async findByUser(userId, { page = 1, limit = 10, filters = {}, exportMode = false } = {}) {
     // Assicurati che siano interi (protezione SQL injection)
     const pageInt = Math.max(1, parseInt(page, 10) || 1);
-    const limitInt = Math.min(100, Math.max(1, parseInt(limit, 10) || 10)); // max 100
+    const limitInt = exportMode
+      ? Math.min(10000, Math.max(1, parseInt(limit, 10) || 10000))
+      : Math.min(100, Math.max(1, parseInt(limit, 10) || 10)); // max 100
     const offset = (pageInt - 1) * limitInt;
 
     // Build WHERE conditions
@@ -56,15 +58,59 @@ export const DocumentModel = {
       params.push(`%${filters.search}%`, `%${filters.search}%`);
     }
 
+    // Filtro per defective
+    if (filters.defective === "only") {
+      whereClauses.push("d.is_defective = 1");
+    } else if (filters.excludeDefective) {
+      whereClauses.push("(d.is_defective = 0 OR d.is_defective IS NULL)");
+    }
+
+    // Filtro per sole fatture (esclude non-invoice)
+    if (filters.invoiceOnly) {
+      whereClauses.push("JSON_UNQUOTE(JSON_EXTRACT(dr.parsed_json, '$.document_type')) = 'invoice'");
+    }
+
+    // Filtro per supplier
+    if (filters.supplier && filters.supplier !== "all") {
+      const supplierId = parseInt(filters.supplier, 10);
+      if (!isNaN(supplierId)) {
+        whereClauses.push("d.supplier_id = ?");
+        params.push(supplierId);
+      }
+    }
+
+    if (filters.tag && filters.tag !== "all") {
+      const tagId = parseInt(filters.tag, 10);
+      if (!isNaN(tagId)) {
+        whereClauses.push(
+          "EXISTS (SELECT 1 FROM document_tags dt JOIN tags t ON dt.tag_id = t.id WHERE dt.document_id = d.id AND dt.tag_id = ? AND t.user_id = ?)"
+        );
+        params.push(tagId, userId);
+      }
+    }
+
     const whereSQL = whereClauses
       .map(clause => clause.replace(/^(user_id|status|uploaded_at|original_name)/, 'd.$1'))
       .join(" AND ");
 
-    // Query per i documenti paginati con JOIN per ricerca full-text
+    // Query per i documenti paginati con JOIN per ricerca full-text + metadata
     const [rows] = await pool.execute(
       `
-      SELECT DISTINCT d.id, d.original_name, d.status, d.uploaded_at, d.processed_at
+      SELECT DISTINCT 
+        d.id, 
+        d.original_name, 
+        d.status, 
+        d.uploaded_at, 
+        d.processed_at,
+        d.is_defective,
+        d.marked_defective_at,
+        d.supplier_id,
+        s.name AS supplier_name,
+        s.vat_number AS supplier_vat_number,
+        dr.manually_edited,
+        dr.parsed_json
       FROM documents d
+      LEFT JOIN suppliers s ON d.supplier_id = s.id AND s.user_id = d.user_id
       LEFT JOIN document_results dr ON d.id = dr.document_id
       WHERE ${whereSQL}
       ORDER BY d.uploaded_at DESC
@@ -102,26 +148,42 @@ async findById(documentId, userId) {
   const [rows] = await pool.execute(
     `
     SELECT
-      id,
-      original_name,
-      stored_name,
-      status,
-      uploaded_at,
-      processed_at
-    FROM documents
-    WHERE id = ? AND user_id = ?
+      d.id,
+      d.original_name,
+      d.stored_name,
+      d.status,
+      d.uploaded_at,
+      d.processed_at,
+      d.is_defective,
+      d.marked_defective_at,
+      d.supplier_id,
+      s.name AS supplier_name,
+      s.vat_number AS supplier_vat_number
+    FROM documents d
+    LEFT JOIN suppliers s ON d.supplier_id = s.id AND s.user_id = d.user_id
+    WHERE d.id = ? AND d.user_id = ?
     `,
     [documentId, userId]
   );
 
-  return rows[0];
+  const doc = rows[0];
+  if (!doc) return null;
+
+  const { supplier_id, supplier_name, supplier_vat_number, ...rest } = doc;
+  return {
+    ...rest,
+    supplier_id: supplier_id || null,
+    supplier: supplier_id
+      ? { id: supplier_id, name: supplier_name, vat_number: supplier_vat_number }
+      : null,
+  };
 },
 
 
 async findByIdForWorker(documentId) {
   const [rows] = await pool.execute(
     `
-    SELECT id, user_id, stored_name
+    SELECT id, user_id, stored_name, original_name
     FROM documents
     WHERE id = ?
     `,
@@ -141,6 +203,68 @@ async findByIdForWorker(documentId) {
       `,
       [status, status, id]
     );
+  },
+
+  async updateSupplierId(documentId, userId, supplierId) {
+    await pool.execute(
+      `UPDATE documents SET supplier_id = ? WHERE id = ? AND user_id = ?`,
+      [supplierId, documentId, userId]
+    );
+  },
+
+  async markAsDefective(documentId, userId) {
+    await pool.execute(
+      `
+      UPDATE documents
+      SET is_defective = 1,
+          marked_defective_at = NOW()
+      WHERE id = ? AND user_id = ?
+      `,
+      [documentId, userId]
+    );
+  },
+
+  async unmarkAsDefective(documentId, userId) {
+    await pool.execute(
+      `
+      UPDATE documents
+      SET is_defective = 0,
+          marked_defective_at = NULL
+      WHERE id = ? AND user_id = ?
+      `,
+      [documentId, userId]
+    );
+  },
+
+  async bulkUnmarkDefective(userId, documentIds) {
+    if (!documentIds?.length) return 0;
+    const placeholders = documentIds.map(() => "?").join(",");
+    const [result] = await pool.execute(
+      `UPDATE documents
+       SET is_defective = 0, marked_defective_at = NULL
+       WHERE id IN (${placeholders}) AND user_id = ? AND is_defective = 1`,
+      [...documentIds, userId]
+    );
+    return result.affectedRows || 0;
+  },
+
+  async findDefectiveDocuments(userId) {
+    const [rows] = await pool.execute(
+      `
+      SELECT 
+        d.id,
+        d.original_name,
+        d.uploaded_at,
+        d.marked_defective_at,
+        dr.parsed_json
+      FROM documents d
+      LEFT JOIN document_results dr ON d.id = dr.document_id
+      WHERE d.user_id = ? AND d.is_defective = 1
+      ORDER BY d.marked_defective_at DESC
+      `,
+      [userId]
+    );
+    return rows;
   },
 
   async deleteById(documentId) {

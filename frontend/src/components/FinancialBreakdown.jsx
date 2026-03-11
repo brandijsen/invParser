@@ -1,4 +1,5 @@
 import { FiTrendingUp, FiTrendingDown, FiDollarSign } from "react-icons/fi";
+import { normalizeAmounts, extractValue } from "../utils/dataHelpers";
 
 const AmountRow = ({ label, value, type = "neutral", icon: Icon }) => {
   const getStyles = () => {
@@ -28,59 +29,63 @@ const AmountRow = ({ label, value, type = "neutral", icon: Icon }) => {
 const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   if (!amounts) return null;
 
+  // Normalizza amounts per gestire { value, confidence }
+  const normalized = normalizeAmounts(amounts);
+  const currency = extractValue(amounts.currency) || "€";
+
   const formatAmount = (value) => {
     if (!value) return null;
-    return `${amounts.currency || "€"} ${value}`;
+    return `${currency} ${value}`;
   };
 
   // Professional fee calculation
   if (documentSubtype === "professional_fee") {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <FiDollarSign className="text-emerald-600" />
           Financial Breakdown
         </h3>
 
         <div className="space-y-1">
-          {amounts.gross_fee && (
+          {normalized.gross_fee && (
             <AmountRow
               label="Gross Fee"
-              value={formatAmount(amounts.gross_fee)}
+              value={formatAmount(normalized.gross_fee)}
               type="neutral"
             />
           )}
 
-          {amounts.vat?.amount && (
+          {normalized.vat?.amount && (
             <AmountRow
-              label={`+ Tax (VAT ${amounts.vat.rate}%)`}
-              value={formatAmount(amounts.vat.amount)}
+              label={`+ Tax (VAT ${normalized.vat.rate}%)`}
+              value={formatAmount(normalized.vat.amount)}
               type="positive"
               icon={FiTrendingUp}
             />
           )}
 
-          {amounts.withholding_tax?.amount && (
+          {normalized.withholding_tax?.amount && (
             <AmountRow
-              label={`- Withholding Tax (${amounts.withholding_tax.rate}%)`}
-              value={`- ${formatAmount(amounts.withholding_tax.amount)}`}
+              label={`- Withholding Tax (${normalized.withholding_tax.rate}%)`}
+              value={`- ${formatAmount(normalized.withholding_tax.amount)}`}
               type="negative"
               icon={FiTrendingDown}
             />
           )}
 
-          {amounts.stamp_duty?.present && amounts.stamp_duty?.amount && (
+          {normalized.stamp_duty?.present && normalized.stamp_duty?.amount && (
             <AmountRow
               label="+ Stamp Duty"
-              value={formatAmount(amounts.stamp_duty.amount)}
+              value={formatAmount(normalized.stamp_duty.amount)}
               type="positive"
             />
           )}
 
-          {amounts.net_payable && (
+          {normalized.net_payable && (
             <AmountRow
               label="Net Payable"
-              value={formatAmount(amounts.net_payable)}
+              value={formatAmount(normalized.net_payable)}
               type="total"
             />
           )}
@@ -92,17 +97,17 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   // Reverse charge (cross-border, no VAT)
   if (documentSubtype === "reverse_charge") {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <FiDollarSign className="text-emerald-600" />
           Financial Breakdown
         </h3>
 
         <div className="space-y-1">
-          {amounts.subtotal && (
+          {normalized.subtotal && (
             <AmountRow
               label="Subtotal"
-              value={formatAmount(amounts.subtotal)}
+              value={formatAmount(normalized.subtotal)}
               type="neutral"
             />
           )}
@@ -111,10 +116,10 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
             VAT 0% – Reverse charge applies (customer liable for VAT)
           </div>
 
-          {amounts.total_amount && (
+          {normalized.total_amount && (
             <AmountRow
               label="Total Amount"
-              value={formatAmount(amounts.total_amount)}
+              value={formatAmount(normalized.total_amount)}
               type="total"
             />
           )}
@@ -126,17 +131,17 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   // Tax exempt (no VAT)
   if (documentSubtype === "tax_exempt") {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
           <FiDollarSign className="text-emerald-600" />
           Financial Breakdown
         </h3>
 
         <div className="space-y-1">
-          {amounts.subtotal && (
+          {normalized.subtotal && (
             <AmountRow
               label="Subtotal"
-              value={formatAmount(amounts.subtotal)}
+              value={formatAmount(normalized.subtotal)}
               type="neutral"
             />
           )}
@@ -145,10 +150,10 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
             VAT exempt service or flat-rate regime
           </div>
 
-          {amounts.total_amount && (
+          {normalized.total_amount && (
             <AmountRow
               label="Total Amount"
-              value={formatAmount(amounts.total_amount)}
+              value={formatAmount(normalized.total_amount)}
               type="total"
             />
           )}
@@ -159,42 +164,42 @@ const FinancialBreakdown = ({ amounts, documentSubtype }) => {
 
   // Standard invoice (default)
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
+    <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
       <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
         <FiDollarSign className="text-emerald-600" />
         Financial Breakdown
       </h3>
 
       <div className="space-y-1">
-        {amounts.subtotal && (
+        {normalized.subtotal && (
           <AmountRow
             label="Subtotal (Net Amount)"
-            value={formatAmount(amounts.subtotal)}
+            value={formatAmount(normalized.subtotal)}
             type="neutral"
           />
         )}
 
-        {amounts.vat?.amount && (
+        {normalized.vat?.amount && (
           <AmountRow
-            label={`+ Tax (VAT ${amounts.vat.rate}%)`}
-            value={formatAmount(amounts.vat.amount)}
+            label={`+ Tax (VAT ${normalized.vat.rate}%)`}
+            value={formatAmount(normalized.vat.amount)}
             type="positive"
             icon={FiTrendingUp}
           />
         )}
 
-        {amounts.stamp_duty?.present && amounts.stamp_duty?.amount && (
+        {normalized.stamp_duty?.present && normalized.stamp_duty?.amount && (
           <AmountRow
             label="+ Stamp Duty"
-            value={formatAmount(amounts.stamp_duty.amount)}
+            value={formatAmount(normalized.stamp_duty.amount)}
             type="positive"
           />
         )}
 
-        {amounts.total_amount && (
+        {normalized.total_amount && (
           <AmountRow
             label="Total Amount"
-            value={formatAmount(amounts.total_amount)}
+            value={formatAmount(normalized.total_amount)}
             type="total"
           />
         )}

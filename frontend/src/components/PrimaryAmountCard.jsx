@@ -1,19 +1,23 @@
 import { FiDollarSign } from "react-icons/fi";
+import { normalizeAmounts, extractValue } from "../utils/dataHelpers";
 
 const PrimaryAmountCard = ({ amounts, documentSubtype }) => {
   if (!amounts) return null;
+
+  // Normalizza amounts per gestire { value, confidence }
+  const normalized = normalizeAmounts(amounts);
 
   // Determine primary amount based on document type
   let primaryAmount = null;
   let primaryLabel = "";
 
-  if (documentSubtype === "professional_fee" && amounts.net_payable) {
+  if (documentSubtype === "professional_fee" && normalized.net_payable) {
     // Professional fee: show Net Payable (after withholding)
-    primaryAmount = amounts.net_payable;
+    primaryAmount = normalized.net_payable;
     primaryLabel = "Net Payable";
-  } else if (amounts.total_amount) {
+  } else if (normalized.total_amount) {
     // All invoice types: show Total Amount
-    primaryAmount = amounts.total_amount;
+    primaryAmount = normalized.total_amount;
     
     // Customize label based on subtype
     if (documentSubtype === "reverse_charge") {
@@ -23,27 +27,29 @@ const PrimaryAmountCard = ({ amounts, documentSubtype }) => {
     } else {
       primaryLabel = "Total Amount";
     }
-  } else if (amounts.subtotal) {
+  } else if (normalized.subtotal) {
     // Fallback: subtotal
-    primaryAmount = amounts.subtotal;
+    primaryAmount = normalized.subtotal;
     primaryLabel = "Subtotal";
-  } else if (amounts.gross_fee) {
+  } else if (normalized.gross_fee) {
     // Fallback: gross fee
-    primaryAmount = amounts.gross_fee;
+    primaryAmount = normalized.gross_fee;
     primaryLabel = "Gross Amount";
   }
 
   if (!primaryAmount) return null;
 
+  const currency = extractValue(amounts.currency) || "€";
+
   return (
-    <div className="bg-linear-to-br from-emerald-500 to-emerald-600 rounded-xl p-8 text-white shadow-lg">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-wider opacity-90 mb-2">
+    <div className="bg-linear-to-br from-emerald-500 to-emerald-600 rounded-xl p-4 sm:p-6 lg:p-8 text-white shadow-lg">
+      <div className="flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm font-medium uppercase tracking-wider opacity-90 mb-1 sm:mb-2">
             {primaryLabel}
           </p>
-          <p className="text-4xl font-bold">
-            {amounts.currency || "€"} {primaryAmount}
+          <p className="text-2xl sm:text-3xl lg:text-4xl font-bold truncate">
+            {currency} {primaryAmount}
           </p>
         </div>
 
