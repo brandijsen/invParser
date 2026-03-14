@@ -10,9 +10,20 @@ import logger, { logError } from "../utils/logger.js";
  */
 export const globalRateLimiter = rateLimit({
   store: new RedisStore({
-    sendCommand: (...args) => redisConnection.call(...args),
+    sendCommand: async (...args) => {
+      try {
+        return await redisConnection.call(...args);
+      } catch (err) {
+        logger.warn("Rate limiter Redis error, failing open", { error: err.message });
+        throw err;
+      }
+    },
     prefix: "rl:global:",
   }),
+  skip: (req) => {
+    if (redisConnection.status !== "ready") return true;
+    return false;
+  },
   windowMs: 15 * 60 * 1000, // 15 minuti
   max: 100, // 100 richieste
   standardHeaders: true,
@@ -36,9 +47,19 @@ export const globalRateLimiter = rateLimit({
  */
 export const authRateLimiter = rateLimit({
   store: new RedisStore({
-    sendCommand: (...args) => redisConnection.call(...args),
+    sendCommand: async (...args) => {
+      try {
+        return await redisConnection.call(...args);
+      } catch (err) {
+        throw err;
+      }
+    },
     prefix: "rl:auth:",
   }),
+  skip: (req) => {
+    if (redisConnection.status !== "ready") return true;
+    return false;
+  },
   windowMs: 15 * 60 * 1000, // 15 minuti
   max: 5, // 5 tentativi
   skipSuccessfulRequests: true, // Login riusciti non contano
