@@ -13,7 +13,7 @@ import logger, { logJob, logError, logValidation } from "../utils/logger.js";
 
 logger.info("Document worker started");
 
-new Worker(
+const worker = new Worker(
   "document-processing",
   async (job) => {
     const { documentId } = job.data;
@@ -198,3 +198,7 @@ new Worker(
   },
   { connection: redisConnection }
 );
+
+worker.on("error", (err) => {
+  logger.warn("DocumentWorker error", { error: err.message });
+});

@@ -20,6 +20,16 @@ import { requestLogger, errorHandler } from "./middlewares/logger.middleware.js"
 
 dotenv.config();
 
+// Safety net: prevent unhandled errors from crashing the server
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught exception", { error: err.message, stack: err.stack });
+});
+process.on("unhandledRejection", (reason) => {
+  logger.error("Unhandled promise rejection", {
+    error: reason instanceof Error ? reason.message : String(reason),
+  });
+});
+
 // 🔍 Valida variabili d'ambiente PRIMA di avviare il server
 validateEnvOrExit();
 
