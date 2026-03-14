@@ -2,14 +2,17 @@
 import IORedis from "ioredis";
 import logger from "../utils/logger.js";
 
-export const redisConnection = new IORedis({
-  host: process.env.REDIS_HOST,
-  port: Number(process.env.REDIS_PORT) || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
+const redisOptions = { maxRetriesPerRequest: null };
 
-  // OBBLIGATORIO PER BULLMQ
-  maxRetriesPerRequest: null,
-});
+export const redisConnection = process.env.REDIS_URL
+  ? new IORedis(process.env.REDIS_URL, redisOptions)
+  : new IORedis({
+      host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT) || 6379,
+      password: process.env.REDIS_PASSWORD || undefined,
+      family: 0,
+      ...redisOptions,
+    });
 
 redisConnection.ping().then(() => {
   logger.info("Redis connected successfully");
