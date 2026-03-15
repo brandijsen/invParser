@@ -23,3 +23,10 @@ h1, h2, h3 {
 a {
   text-decoration: none;
 }
+
+/* CURSORE POINTER SU ELEMENTI CLICCABILI */
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+}
