@@ -16,7 +16,6 @@ export const generateCSV = (documents) => {
   };
 
   const headers = [
-    "ID",
     "File Name",
     "Document URL",
     "Invoice Number",
@@ -61,7 +60,6 @@ export const generateCSV = (documents) => {
     const netPayable = getVal(amounts.net_payable);
 
     return [
-      doc.id,
       doc.original_name,
       getDocumentUrl(doc.id),
       invoiceNumber,
@@ -128,7 +126,6 @@ export const generateExcel = (documents) => {
     const invoiceDate = getVal(semantic.invoice_date);
 
     return {
-      ID: doc.id,
       "File Name": doc.original_name,
       "Document URL": getDocumentUrl(doc.id),
       "Invoice Number": invoiceNumber,
@@ -157,8 +154,8 @@ export const generateExcel = (documents) => {
   const wb = xlsx.utils.book_new();
   const ws = xlsx.utils.json_to_sheet(data);
 
-  // Colonna "Document URL" = 3a colonna (C) - aggiungi hyperlink cliccabili
-  const docUrlCol = "C";
+  // Colonna "Document URL" = 2a colonna (B) - aggiungi hyperlink cliccabili
+  const docUrlCol = "B";
   data.forEach((row, i) => {
     const url = row["Document URL"];
     if (url) {
