@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import DocumentUpload from "../components/DocumentUpload";
 import DocumentFilters from "../components/DocumentFilters";
+import PageLoader from "../components/PageLoader";
 import { Link } from "react-router-dom";
 import { hasRedFlags } from "../utils/redFlagChecker";
 
@@ -349,7 +350,7 @@ const Documents = () => {
         />
 
         {loading ? (
-          <div className="text-slate-600">Loading documents…</div>
+          <PageLoader message="Loading documents…" />
         ) : documents.length === 0 ? (
           <div className="bg-white rounded-lg p-8 text-slate-600">
             No documents uploaded yet.

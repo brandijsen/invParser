@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import api from "../api/axios";
 import { setUser } from "../store/authSlice";
+import PageLoader from "../components/PageLoader";
 
 const VerifySuccess = () => {
   const [params] = useSearchParams();
@@ -36,8 +37,8 @@ const VerifySuccess = () => {
 
   if (loading) {
     return (
-      <div className="pt-40 text-center text-xl">
-        Verifying your account…
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <PageLoader message="Verifying your account…" />
       </div>
     );
   }

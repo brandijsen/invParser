@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import api from "../api/axios";
 import { setUser } from "../store/authSlice";
+import PageLoader from "./PageLoader";
 
 const PersistLogin = ({ children }) => {
   const dispatch = useDispatch();
@@ -35,11 +36,10 @@ const PersistLogin = ({ children }) => {
     fetchUser();
   }, [dispatch]);
 
-  // ⏳ Loading mentre recuperiamo la sessione
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="animate-spin h-10 w-10 rounded-full border-4 border-gray-300 border-t-[#0A2342]"></div>
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
+        <PageLoader message="Checking session…" variant="inline" />
       </div>
     );
   }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
+import PageLoader from "../components/PageLoader";
 import {
   FiFileText,
   FiCheckCircle,
@@ -69,9 +70,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="pt-24 sm:pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8">
-          <div className="text-slate-600">Loading dashboard...</div>
-        </div>
+        <PageLoader message="Loading dashboard…" />
       </div>
     );
   }

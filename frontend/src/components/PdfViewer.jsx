@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../api/axios";
+import PageLoader from "./PageLoader";
 
 /**
  * Visualizzatore PDF in-app.
@@ -43,8 +44,8 @@ const PdfViewer = ({ documentId, className = "" }) => {
 
   if (loading) {
     return (
-      <div className={`flex items-center justify-center bg-slate-100 rounded-lg ${className}`} style={{ minHeight: 500 }}>
-        <p className="text-slate-500">Loading PDF…</p>
+      <div className={`bg-slate-100 rounded-lg ${className}`} style={{ minHeight: 500 }}>
+        <PageLoader message="Loading PDF…" variant="inline" />
       </div>
     );
   }

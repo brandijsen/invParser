@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../api/axios";
 import { FiSearch, FiX, FiBriefcase, FiFileText } from "react-icons/fi";
+import PageLoader from "../components/PageLoader";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
@@ -69,7 +70,7 @@ const Suppliers = () => {
         {/* List */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="py-12 text-center text-slate-500">Loading...</div>
+            <PageLoader message="Loading suppliers…" variant="inline" />
           ) : suppliers.length === 0 ? (
             <div className="py-12 text-center text-slate-500">
               <FiBriefcase className="w-12 h-12 mx-auto mb-4 text-slate-300" />
