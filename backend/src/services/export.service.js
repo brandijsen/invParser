@@ -6,7 +6,7 @@ const getDocumentUrl = (docId) => {
 };
 
 /**
- * Converte i documenti in formato CSV
+ * Converts documents to CSV format
  */
 export const generateCSV = (documents) => {
   const getVal = (o) => {
@@ -82,7 +82,7 @@ export const generateCSV = (documents) => {
     ];
   });
 
-  // Costruisci CSV manualmente
+  // Build CSV manually
   const csvContent = [
     headers.join(","),
     ...rows.map((row) =>
@@ -94,7 +94,7 @@ export const generateCSV = (documents) => {
 };
 
 /**
- * Converte i documenti in formato Excel
+ * Converts documents to Excel format
  */
 export const generateExcel = (documents) => {
   const getVal = (o) => {
@@ -150,21 +150,21 @@ export const generateExcel = (documents) => {
     };
   });
 
-  // Crea workbook
+  // Create workbook
   const wb = xlsx.utils.book_new();
   const ws = xlsx.utils.json_to_sheet(data);
 
-  // Colonna "Document URL" = 2a colonna (B) - aggiungi hyperlink cliccabili
+  // Document URL column (B) - add clickable hyperlinks
   const docUrlCol = "B";
   data.forEach((row, i) => {
     const url = row["Document URL"];
     if (url) {
       const cellRef = `${docUrlCol}${i + 2}`;
-      if (ws[cellRef]) ws[cellRef].l = { Target: url, Tooltip: "Apri documento" };
+      if (ws[cellRef]) ws[cellRef].l = { Target: url, Tooltip: "Open document" };
     }
   });
 
-  // Auto-size colonne
+  // Auto-size columns
   const maxWidth = 50;
   const wscols = Object.keys(data[0] || {}).map((key) => ({
     wch: Math.min(maxWidth, Math.max(key.length + 2, 10))
@@ -173,7 +173,7 @@ export const generateExcel = (documents) => {
 
   xlsx.utils.book_append_sheet(wb, ws, "Documents");
 
-  // Genera buffer
+  // Generate buffer
   const buffer = xlsx.write(wb, { type: "buffer", bookType: "xlsx" });
   return buffer;
 };

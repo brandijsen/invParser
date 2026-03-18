@@ -9,6 +9,4 @@ const [docs] = await pool.execute(`
   JOIN document_results dr ON d.id = dr.document_id
   LIMIT 10
 `);
-console.log("Suppliers count:", suppliers.length, suppliers);
-console.log("Sample docs:", docs);
 process.exit(0);

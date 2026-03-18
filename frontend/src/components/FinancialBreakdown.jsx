@@ -29,7 +29,7 @@ const AmountRow = ({ label, value, type = "neutral", icon: Icon }) => {
 const FinancialBreakdown = ({ amounts, documentSubtype }) => {
   if (!amounts) return null;
 
-  // Normalizza amounts per gestire { value, confidence }
+  // Normalize amounts to handle { value, confidence }
   const normalized = normalizeAmounts(amounts);
   const currency = extractValue(amounts.currency) || "€";
 

@@ -6,17 +6,17 @@ import logger, { logError } from "../utils/logger.js";
 /**
  * Batch Notification Service
  * 
- * Raggruppa notifiche email per documenti uploadati insieme.
- * Invia una singola email riassuntiva invece di N email separate.
+ * Groups email notifications for documents uploaded together.
+ * Sends a single summary email instead of N separate emails.
  */
 
-const BATCH_TIMEOUT = 300000; // 5 minuti - attende documenti lenti (OpenAI può impiegare fino a 30s/doc)
+const BATCH_TIMEOUT = 300000; // 5 min - wait for slow documents (OpenAI can take up to 30s/doc)
 const BATCH_PREFIX = "batch:";
 
 /**
- * Crea un nuovo batch di upload
+ * Creates a new upload batch
  * @param {number} userId - ID utente
- * @param {number} documentCount - Numero documenti nel batch
+ * @param {number} documentCount - Number of documents in batch
  * @returns {string} batchId
  */
 export function createBatch(userId, documentCount) {
@@ -25,7 +25,7 @@ export function createBatch(userId, documentCount) {
 }
 
 /**
- * Registra un documento in un batch
+ * Registers a document in a batch
  * @param {string} batchId - ID batch
  * @param {number} documentId - ID documento
  * @param {string} documentName - Nome documento
@@ -33,7 +33,7 @@ export function createBatch(userId, documentCount) {
 export async function registerDocumentInBatch(batchId, documentId, documentName) {
   const key = `${BATCH_PREFIX}${batchId}`;
   
-  // Aggiungi documento alla lista
+  // Add document to list
   await redisConnection.hset(key, `doc:${documentId}`, JSON.stringify({
     id: documentId,
     name: documentName,
@@ -41,7 +41,7 @@ export async function registerDocumentInBatch(batchId, documentId, documentName)
     addedAt: Date.now()
   }));
   
-  // Set expiry (2 ore per sicurezza)
+  // Set expiry (2 hours for safety)
   await redisConnection.expire(key, 7200);
 }
 
@@ -54,7 +54,7 @@ export async function registerDocumentInBatch(batchId, documentId, documentName)
  * @param {string} errorMessage - Messaggio errore (opzionale)
  */
 export async function markDocumentComplete(documentId, userId, documentName, status = 'done', errorMessage = null) {
-  // Cerca tutti i batch dell'utente (escludi chiavi :timeout)
+  // Find all user batches (exclude :timeout keys)
   const pattern = `${BATCH_PREFIX}${userId}_*`;
   const allKeys = await redisConnection.keys(pattern);
   
@@ -64,7 +64,7 @@ export async function markDocumentComplete(documentId, userId, documentName, sta
   let batchId = null;
   let batchKey = null;
   
-  // Trova il batch che contiene questo documento
+  // Find the batch that contains this document
   for (const key of keys) {
     const exists = await redisConnection.hexists(key, `doc:${documentId}`);
     if (exists) {
@@ -74,7 +74,7 @@ export async function markDocumentComplete(documentId, userId, documentName, sta
     }
   }
   
-  // Se non c'è batch, invia email singola (upload singolo)
+  // If no batch, send single email (single upload)
   if (!batchKey) {
     return await sendSingleEmail(userId, documentId, documentName, status, errorMessage);
   }
@@ -88,22 +88,22 @@ export async function markDocumentComplete(documentId, userId, documentName, sta
     completedAt: Date.now()
   }));
   
-  // Controlla se tutti i documenti sono completati
+  // Check if all documents are completed
   const allDocs = await redisConnection.hgetall(batchKey);
   const docs = Object.values(allDocs).map(d => JSON.parse(d));
   
   const pending = docs.filter(d => d.status === 'pending');
   
-  // Se ci sono ancora documenti pending, aspetta
+  // If there are still pending documents, wait
   if (pending.length > 0) {
-    // Set timer per forzare invio dopo timeout (SOLO se non esiste già)
+    // Set timer to force send after timeout (ONLY if not already set)
     const timeoutKey = `${batchKey}:timeout`;
     const hasTimeout = await redisConnection.exists(timeoutKey);
     
     if (!hasTimeout) {
       await redisConnection.set(timeoutKey, Date.now().toString(), 'PX', BATCH_TIMEOUT);
       
-      // Dopo timeout, controlla di nuovo e invia se necessario
+      // After timeout, check again and send if needed
       setTimeout(async () => {
         await checkAndSendBatchEmail(batchKey, userId);
       }, BATCH_TIMEOUT);
@@ -146,7 +146,7 @@ async function sendSingleEmail(userId, documentId, documentName, status, errorMe
 }
 
 /**
- * Controlla stato batch e invia email solo se necessario (chiamata da timeout)
+ * Checks batch state and sends email only if needed (called from timeout)
  * Se ci sono ancora pending, li marca come failed (sono bloccati) e invia
  */
 async function checkAndSendBatchEmail(batchKey, userId) {
@@ -163,7 +163,7 @@ async function checkAndSendBatchEmail(batchKey, userId) {
     const docs = Object.values(allDocs).map(d => JSON.parse(d));
     const pending = docs.filter(d => d.status === 'pending');
     
-    // Marca i pending come failed (bloccati dopo il timeout)
+    // Mark pending as failed (stuck after timeout)
     for (const doc of pending) {
       await redisConnection.hset(batchKey, `doc:${doc.id}`, JSON.stringify({
         ...doc,
@@ -192,11 +192,11 @@ async function checkAndSendBatchEmail(batchKey, userId) {
 }
 
 /**
- * Invia email riassuntiva per batch
+ * Sends summary email for batch
  */
 async function sendBatchEmail(batchKey, userId) {
   try {
-    // Get tutti i documenti
+    // Get all documents
     const allDocs = await redisConnection.hgetall(batchKey);
     if (!allDocs || Object.keys(allDocs).length === 0) return;
     
@@ -260,7 +260,7 @@ async function sendBatchSummaryEmail(userEmail, userName, summary) {
 }
 
 /**
- * Template HTML per email batch
+ * HTML template for batch email
  */
 function getBatchEmailTemplate(userName, summary) {
   const { completed, failed, pending, total } = summary;

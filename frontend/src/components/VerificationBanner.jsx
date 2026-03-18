@@ -9,7 +9,7 @@ const VerificationBanner = () => {
   // stato SOLO LOCALE (non persistito)
   const [visible, setVisible] = useState(true);
 
-  // auto-hide dopo invio email
+  // auto-hide after sending email
   useEffect(() => {
     if (emailSent) {
       const timer = setTimeout(() => {
@@ -20,7 +20,7 @@ const VerificationBanner = () => {
     }
   }, [emailSent]);
 
-  // condizioni di render
+  // render conditions
   if (!user || user.verified === 1 || !visible) return null;
 
   return (

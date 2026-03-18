@@ -11,7 +11,7 @@ import emailRoutes from "./routes/email.routes.js";
 import "./config/redis.js";
 import { documentQueue } from "./queues/documentQueue.js";
 import "./queues/documentWorker.js";
-import { syncScadenzaForAllDocuments } from "./services/scadenzaTags.service.js";
+import { syncDueDatesForAllDocuments } from "./services/dueDateTags.service.js";
 import cookieParser from "cookie-parser";
 import { globalRateLimiter } from "./middlewares/rateLimiter.middleware.js";
 import { validateEnvOrExit } from "./utils/envValidator.js";
@@ -30,7 +30,7 @@ process.on("unhandledRejection", (reason) => {
   });
 });
 
-// 🔍 Valida variabili d'ambiente PRIMA di avviare il server
+// 🔍 Validate environment variables BEFORE starting the server
 validateEnvOrExit();
 
 const app = express();
@@ -50,10 +50,10 @@ app.use(cors({
 
 app.use(express.json());
 
-// 📊 Request Logging (PRIMA di tutto per tracciare ogni richiesta)
+// 📊 Request Logging (first to track every request)
 app.use(requestLogger);
 
-// 🛡️ Rate Limiting Globale (salta in development per evitare 429 durante test)
+// 🛡️ Global Rate Limiting (skipped in development to avoid 429 during tests)
 if (process.env.NODE_ENV === "production") {
   app.use(globalRateLimiter);
 }
@@ -76,18 +76,18 @@ app.use("/api/tags", tagRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/email", emailRoutes);
 
-// ❌ Error Handler Centralizzato (DEVE essere DOPO tutte le routes)
+// ❌ Centralized Error Handler (MUST be AFTER all routes)
 app.use(errorHandler);
 
-// 🏷️ Sync periodico tag scadenza (ogni ora) – aggiorna 30/20/10/3/2/1/overdue
+// 🏷️ Periodic due-date tags sync (hourly) – updates 30/20/10/3/2/1/overdue
 setInterval(async () => {
   try {
-    const { updated } = await syncScadenzaForAllDocuments();
+    const { updated } = await syncDueDatesForAllDocuments();
     if (updated > 0) {
-      logger.info("Scadenza tags synced", { documentsUpdated: updated });
+      logger.info("Due-date tags synced", { documentsUpdated: updated });
     }
   } catch (err) {
-    logger.error("Scadenza tags sync failed", {
+    logger.error("Due-date tags sync failed", {
       error: err?.message,
       stack: err?.stack
     });
@@ -108,13 +108,13 @@ app.listen(PORT, async () => {
       errorHandling: true
     }
   });
-  // Sync scadenza tags all'avvio (corregge tag dopo restart)
+  // Sync due-date tags on startup (fixes tags after restart)
   try {
-    const { updated } = await syncScadenzaForAllDocuments();
+    const { updated } = await syncDueDatesForAllDocuments();
     if (updated > 0) {
-      logger.info("Scadenza tags synced at startup", { documentsUpdated: updated });
+      logger.info("Due-date tags synced at startup", { documentsUpdated: updated });
     }
   } catch (err) {
-    logger.warn("Startup scadenza sync failed", { error: err?.message });
+    logger.warn("Startup due-date sync failed", { error: err?.message });
   }
 });

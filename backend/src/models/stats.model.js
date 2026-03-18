@@ -2,10 +2,10 @@ import { pool } from "../config/db.js";
 
 export const StatsModel = {
   /**
-   * Ottiene statistiche overview per l'utente
+   * Gets overview statistics for the user
    */
   async getOverview(userId) {
-    // Totale documenti per status
+    // Total documents per status
     const [statusStats] = await pool.execute(
       `
       SELECT 
@@ -30,7 +30,7 @@ export const StatsModel = {
       [userId]
     );
 
-    // Calcola importi totali (aggregando da document_results)
+    // Calculate total amounts (aggregating from document_results)
     const [amountsStats] = await pool.execute(
       `
       SELECT 
@@ -47,10 +47,10 @@ export const StatsModel = {
       [userId]
     );
 
-    // Aggrega importi per valuta
+    // Aggregate amounts by currency
     const amountsByCurrency = {};
     amountsStats.forEach((row) => {
-      // Supporta sia formato vecchio che nuovo
+      // Support both old and new format
       const currency = row.currency_val || row.currency_simple;
       const amount = row.total_amount_val || row.total_amount_simple || row.net_payable_val || row.net_payable_simple;
 
@@ -77,7 +77,7 @@ export const StatsModel = {
   },
 
   /**
-   * Ottiene trend di upload (ultimi 30 giorni)
+   * Gets upload trend (last 30 days)
    */
   async getUploadTrend(userId, days = 30) {
     const [rows] = await pool.execute(
@@ -98,7 +98,7 @@ export const StatsModel = {
   },
 
   /**
-   * Ottiene distribuzione per tipo documento (doc_type + doc_subtype)
+   * Gets distribution by document type (doc_type + doc_subtype)
    */
   async getDocumentTypeDistribution(userId) {
     const [rows] = await pool.execute(
@@ -119,9 +119,9 @@ export const StatsModel = {
   },
 
   /**
-   * Ottiene conteggio documenti per bucket scadenza (tag due_date)
+   * Gets document count per due-date bucket (due_date tag)
    */
-  async getScadenzaDistribution(userId) {
+  async getDueDateDistribution(userId) {
     const [rows] = await pool.execute(
       `
       SELECT t.name, t.color, COUNT(CASE WHEN d.id IS NOT NULL THEN 1 END) as count
@@ -140,7 +140,7 @@ export const StatsModel = {
   },
 
   /**
-   * Ottiene spesa aggregata per mese (ultimi N giorni, per data fattura o upload)
+   * Gets spending aggregated by month (last N days, by invoice or upload date)
    */
   async getSpendingTrend(userId, days = 90) {
     const [rows] = await pool.execute(
@@ -200,7 +200,7 @@ export const StatsModel = {
   },
 
   /**
-   * Ultimi documenti caricati (per dashboard)
+   * Latest uploaded documents (for dashboard)
    */
   async getLatestDocuments(userId, limit = 5) {
     const [rows] = await pool.execute(

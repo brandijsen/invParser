@@ -11,7 +11,7 @@ const PersistLogin = ({ children }) => {
   useEffect(() => {
     const accessToken = localStorage.getItem("accessToken");
 
-    // ❌ Nessun token → utente non loggato
+    // ❌ No token → user not logged in
     if (!accessToken) {
       setLoading(false);
       return;
@@ -25,7 +25,7 @@ const PersistLogin = ({ children }) => {
       } catch (err) {
         console.error("PersistLogin error:", err);
 
-        // Token non valido → pulizia
+        // Invalid token → cleanup
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
       } finally {

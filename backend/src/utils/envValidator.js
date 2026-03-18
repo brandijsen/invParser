@@ -1,10 +1,10 @@
 /**
  * Environment Variables Validator
- * Controlla che tutte le variabili d'ambiente necessarie siano configurate
- * SICURO: Controlla solo l'esistenza, NON logga mai i valori
+ * Ensures all required environment variables are configured
+ * SAFE: Checks only existence, NEVER logs values
  */
 
-// Lista delle variabili d'ambiente richieste
+// Required environment variables
 const REQUIRED_ENV_VARS = [
   // Server
   { name: "PORT", description: "Server port" },
@@ -38,7 +38,7 @@ const REQUIRED_ENV_VARS = [
   { name: "BASE_URL", description: "Backend base URL" },
 ];
 
-// Variabili opzionali (con default o non critiche)
+// Optional variables (with default or non-critical)
 const OPTIONAL_ENV_VARS = [
   { name: "REDIS_PORT", description: "Redis port (defaults to 6379)" },
   { name: "REDIS_PASSWORD", description: "Redis password (if required)" },
@@ -49,14 +49,14 @@ const OPTIONAL_ENV_VARS = [
 ];
 
 /**
- * Valida tutte le variabili d'ambiente richieste
+ * Validates all required environment variables
  * @returns {Object} { valid: boolean, missing: Array, warnings: Array }
  */
 export function validateEnv() {
   const missing = [];
   const warnings = [];
 
-  // Controlla variabili richieste (CRITICHE)
+  // Check required variables (CRITICAL)
   for (const envVar of REQUIRED_ENV_VARS) {
     const value = process.env[envVar.name];
     
@@ -68,7 +68,7 @@ export function validateEnv() {
     }
   }
 
-  // Controlla variabili opzionali (WARNING)
+  // Check optional variables (WARNING)
   for (const envVar of OPTIONAL_ENV_VARS) {
     const value = process.env[envVar.name];
     
@@ -88,24 +88,18 @@ export function validateEnv() {
 }
 
 /**
- * Valida e termina il processo se ci sono errori critici
- * Chiamare all'avvio del server
+ * Validates and exits the process if there are critical errors
+ * Call at server startup
  */
 export function validateEnvOrExit() {
-  console.log("🔍 Validating environment variables...");
-  
   const result = validateEnv();
 
-  // Mostra warnings per variabili opzionali
+  // Show warnings for optional variables
   if (result.warnings.length > 0) {
-    console.log("\n⚠️  Optional environment variables not set:");
-    result.warnings.forEach((envVar) => {
-      console.log(`   - ${envVar.name}: ${envVar.description}`);
-    });
-    console.log("   (These are optional - server will run with limited features)\n");
+    // Optional env vars not set - server runs with limited features
   }
 
-  // Se mancano variabili critiche, termina
+  // If critical variables missing, exit
   if (!result.valid) {
     console.error("\n❌ FATAL: Missing required environment variables:\n");
     result.missing.forEach((envVar) => {
@@ -115,17 +109,14 @@ export function validateEnvOrExit() {
     console.error("\n💡 Fix: Add missing variables to your .env file");
     console.error("📄 Example: See .env.example for reference\n");
     
-    // Termina il processo
+    // Exit process
     process.exit(1);
   }
-
-  // Tutto OK
-  console.log("✅ All required environment variables validated\n");
 }
 
 /**
- * Crea un file .env.example con tutte le variabili
- * Utile per documentazione e onboarding
+ * Creates .env.example with all variables
+ * Useful for documentation and onboarding
  */
 export function generateEnvExample() {
   const lines = [

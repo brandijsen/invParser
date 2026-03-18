@@ -14,7 +14,7 @@ async function getSupplierOr404(supplierId, userId) {
 
 /**
  * GET /api/suppliers?search=xxx
- * Lista fornitori dell'utente, con ricerca opzionale
+ * Lists user's suppliers, with optional search
  */
 export const listSuppliers = async (req, res) => {
   try {
@@ -60,7 +60,7 @@ export const getSupplier = async (req, res) => {
 
 /**
  * POST /api/suppliers
- * Crea un nuovo fornitore manualmente
+ * Creates a new supplier manually
  * Body: { name, vat_number?, address?, email? }
  */
 export const createSupplier = async (req, res) => {
@@ -89,8 +89,8 @@ export const createSupplier = async (req, res) => {
 
 /**
  * PATCH /api/suppliers/:id
- * Aggiorna un fornitore
- * Body: { name?, vat_number?, address?, email? } (tutti opzionali, almeno uno richiesto)
+ * Updates a supplier
+ * Body: { name?, vat_number?, address?, email? } (all optional, at least one required)
  */
 export const updateSupplier = async (req, res) => {
   try {
@@ -126,7 +126,7 @@ export const updateSupplier = async (req, res) => {
 
 /**
  * DELETE /api/suppliers/:id
- * Elimina un fornitore. I documenti collegati avranno supplier_id = NULL (ON DELETE SET NULL).
+ * Deletes a supplier. Linked documents will have supplier_id = NULL (ON DELETE SET NULL).
  */
 export const deleteSupplier = async (req, res) => {
   try {

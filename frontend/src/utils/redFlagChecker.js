@@ -1,5 +1,5 @@
 /**
- * Verifica se un documento ha red flags (campi con confidence < threshold)
+ * Checks if a document has red flags (fields with confidence < threshold)
  */
 export function hasRedFlags(parsedJson, threshold = 95) {
   if (!parsedJson) return false;
@@ -9,7 +9,7 @@ export function hasRedFlags(parsedJson, threshold = 95) {
 }
 
 /**
- * Estrae tutti i campi con confidence da un oggetto nested
+ * Extracts all fields with confidence from a nested object
  */
 function extractFieldsWithConfidence(obj, path = "") {
   const fields = [];

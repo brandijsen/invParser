@@ -19,21 +19,21 @@ const AccountDeleted = () => {
         {hasError ? (
           <>
             <FiAlertCircle className="mx-auto text-5xl text-amber-500 mb-4" />
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Link non valido o scaduto</h1>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Invalid or expired link</h1>
             <p className="text-slate-600 text-sm mb-6">
-              Il link per confermare l'eliminazione non è valido o è scaduto (24 ore).{" "}
+              The confirmation link is invalid or has expired (24 hours).{" "}
               <Link to="/profile" className="text-emerald-600 hover:underline font-medium">
-                Vai al profilo
+                Go to profile
               </Link>{" "}
-              per richiedere un nuovo link.
+              to request a new link.
             </p>
           </>
         ) : (
           <>
             <FiCheckCircle className="mx-auto text-5xl text-emerald-500 mb-4" />
-            <h1 className="text-xl font-bold text-slate-900 mb-2">Account eliminato</h1>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Account deleted</h1>
             <p className="text-slate-600 text-sm mb-6">
-              Il tuo account e tutti i dati associati sono stati eliminati in modo permanente.
+              Your account and all associated data have been permanently deleted.
             </p>
           </>
         )}
@@ -41,7 +41,7 @@ const AccountDeleted = () => {
           to="/"
           className="inline-block px-6 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700"
         >
-          Torna alla home
+          Back to home
         </Link>
       </div>
     </div>

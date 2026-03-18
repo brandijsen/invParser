@@ -140,7 +140,7 @@ const DocumentDetail = () => {
 
   const amounts = parsed?.semantic?.amounts;
 
-  // Check se documento NON è una fattura
+  // Check if document is NOT an invoice
   const isNotInvoice = parsed?.document_type && parsed.document_type !== 'invoice';
   const wrongDocumentFlag = validationFlags.find(f => f.type === 'wrong_document_type');
 
@@ -155,7 +155,7 @@ const DocumentDetail = () => {
           resultMetadata={resultMetadata}
         />
 
-        {/* 🚨 ALERT: Documento NON è una fattura */}
+        {/* 🚨 ALERT: Document is NOT an invoice */}
         {isNotInvoice && (
           <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 shadow-sm">
             <div className="flex items-start gap-4">
@@ -219,7 +219,7 @@ const DocumentDetail = () => {
           </div>
         )}
 
-        {/* Red Flags Alert (mostra confidence + validation flags) */}
+        {/* Red Flags Alert (shows confidence + validation flags) */}
         {parsed && (
           <RedFlagsAlert 
             parsed={parsed} 

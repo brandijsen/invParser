@@ -368,10 +368,10 @@ export const exportData = async (req, res) => {
 };
 
 // ───────────────────────────────────────────────
-// DELETE ACCOUNT (GDPR Art. 17) – via link email per tutti
+// DELETE ACCOUNT (GDPR Art. 17) – via email link for all users
 // ───────────────────────────────────────────────
 
-/** Esegue la cancellazione fisica dell'account (helper condiviso) */
+/** Performs physical deletion of the account (shared helper) */
 const performAccountDeletion = async (userId, userEmail, log) => {
   const uploadsDir = getUploadDir(userId);
   if (fs.existsSync(uploadsDir)) {
@@ -392,7 +392,7 @@ const performAccountDeletion = async (userId, userEmail, log) => {
   await pool.execute("DELETE FROM users WHERE id = ?", [userId]);
 };
 
-/** Richiesta eliminazione: genera token e invia email con link (tutti gli account) */
+/** Deletion request: generates token and sends email with link (all account types) */
 export const requestDeleteAccount = async (req, res) => {
   const log = getRequestLogger(req);
   try {
@@ -407,7 +407,7 @@ export const requestDeleteAccount = async (req, res) => {
     logAuth("delete_account_requested", { userId: user.id, email: user.email });
 
     return res.json({
-      message: "Ti abbiamo inviato un'email con un link per confermare l'eliminazione. Il link scade tra 24 ore.",
+      message: "We sent you an email with a link to confirm deletion. The link expires in 24 hours.",
     });
   } catch (err) {
     logError(err, { operation: "requestDeleteAccount", userId: req.user?.id });
@@ -454,14 +454,14 @@ export const uploadAvatar = async (req, res) => {
   const log = getRequestLogger(req);
   try {
     if (!req.file) {
-      return res.status(400).json({ message: "Nessun file caricato" });
+      return res.status(400).json({ message: "No file uploaded" });
     }
 
     const userId = req.user.id;
     const oldPath = req.user.avatar_path;
     const filename = req.file.filename;
 
-    // Elimina vecchio avatar se esiste
+    // Delete old avatar if it exists
     if (oldPath) {
       const oldFullPath = getFilePath(userId, oldPath);
       if (fs.existsSync(oldFullPath)) {
@@ -482,7 +482,7 @@ export const uploadAvatar = async (req, res) => {
 };
 
 // ───────────────────────────────────────────────
-// GET AVATAR (serve image)
+// GET AVATAR (serves image)
 // ───────────────────────────────────────────────
 export const getAvatar = async (req, res) => {
   try {

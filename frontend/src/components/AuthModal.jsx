@@ -72,7 +72,7 @@ const AuthModal = ({ isOpen, onClose }) => {
               {loading ? "Loading..." : "Sign In"}
             </button>
 
-            {/* 🔥 FORGOT PASSWORD */}
+            {/* 🔥 Forgot password link */}
             <div className="text-center mt-2">
               <button
                 type="button"

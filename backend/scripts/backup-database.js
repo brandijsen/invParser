@@ -2,13 +2,13 @@
  * Database Backup Script
  *
  * - mysqldump + gzip
- * - Salva localmente (backups/)
- * - Upload su S3
- * - Retention 30 giorni
- * - Email alert su failure
+ * - Saves locally (backups/)
+ * - Upload to S3
+ * - 30-day retention
+ * - Email alert on failure
  *
- * Esecuzione: node scripts/backup-database.js
- * Cron: 0 3 * * * (ogni giorno alle 3:00)
+ * Run: node scripts/backup-database.js
+ * Cron: 0 3 * * * (daily at 3:00 AM)
  */
 
 import { spawn } from "child_process";
@@ -32,9 +32,7 @@ const S3_ENV = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_S3_BUCKET"];
 
 function log(msg, level = "info") {
   const ts = new Date().toISOString();
-  const line = `[${ts}] [${level.toUpperCase()}] ${msg}`;
-  console.log(line);
-  return line;
+  return `[${ts}] [${level.toUpperCase()}] ${msg}`;
 }
 
 function runMysqldumpDocker() {

@@ -2,20 +2,20 @@ import winston from "winston";
 import path from "path";
 import fs from "fs";
 
-// Crea la directory logs se non esiste
+// Create logs directory if it doesn't exist
 const logsDir = path.join(process.cwd(), "logs");
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
 
-// Formato personalizzato per i log
+// Custom format for logs
 const customFormat = winston.format.combine(
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.errors({ stack: true }),
   winston.format.json()
 );
 
-// Formato più leggibile per la console
+// More readable format for console
 const consoleFormat = winston.format.combine(
   winston.format.timestamp({ format: "HH:mm:ss" }),
   winston.format.colorize(),
@@ -24,7 +24,7 @@ const consoleFormat = winston.format.combine(
     
     // Aggiungi metadati rilevanti
     if (Object.keys(metadata).length > 0) {
-      // Escludi stack trace dalla console per brevità (già nei file)
+      // Exclude stack trace from console for brevity (already in files)
       const { stack, ...rest } = metadata;
       if (Object.keys(rest).length > 0) {
         msg += ` ${JSON.stringify(rest)}`;
@@ -44,7 +44,7 @@ const logger = winston.createLogger({
     environment: process.env.NODE_ENV || "development",
   },
   transports: [
-    // Log di tutti i livelli su file combinato
+    // Log all levels to combined file
     new winston.transports.File({
       filename: path.join(logsDir, "combined.log"),
       maxsize: 5242880, // 5MB
@@ -73,8 +73,8 @@ const logger = winston.createLogger({
 });
 
 /**
- * Helper per creare log context-aware
- * Usa questo per aggiungere contesto specifico ai log
+ * Helper to create context-aware logs
+ * Use this to add specific context to logs
  */
 export function createLogContext(context = {}) {
   return {
@@ -108,7 +108,7 @@ export function logOperation(operation, details = {}, level = "info") {
 }
 
 /**
- * Log performance/timing per operazioni lente
+ * Log performance/timing for slow operations
  */
 export function logPerformance(operation, duration, threshold = 1000) {
   const level = duration > threshold ? "warn" : "info";

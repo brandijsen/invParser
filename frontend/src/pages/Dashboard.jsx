@@ -56,9 +56,9 @@ const Dashboard = () => {
         setLatestDocuments(Array.isArray(docs) ? docs : []);
       } catch (err) {
         console.error("Failed to fetch stats:", err);
-        const msg = err.response?.data?.message || err.message || "Errore nel caricamento statistiche";
+        const msg = err.response?.data?.message || err.message || "Error loading statistics";
         const status = err.response?.status;
-        setError(status === 401 ? "Sessione scaduta. Effettua nuovamente l'accesso." : msg);
+        setError(status === 401 ? "Session expired. Please log in again." : msg);
       } finally {
         setLoading(false);
       }
@@ -80,10 +80,10 @@ const Dashboard = () => {
       <div className="pt-24 sm:pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
         <div className="max-w-7xl mx-auto px-4 sm:px-8">
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 text-amber-800">
-            <p className="font-medium">Impossibile caricare la dashboard</p>
+            <p className="font-medium">Unable to load dashboard</p>
             <p className="text-sm mt-1">{error}</p>
             <p className="text-xs mt-3 text-amber-600">
-              Verifica che il backend sia in esecuzione (porta 5000) e che MySQL sia attivo.
+              Ensure the backend is running (port 5000) and MySQL is active.
             </p>
           </div>
         </div>
@@ -112,29 +112,29 @@ const Dashboard = () => {
         ? `${r.doc_type || "other"}_${r.doc_subtype}`
         : (r.doc_type || "other");
       return {
-        name: TYPE_SUBTYPE_LABELS[key] || TYPE_SUBTYPE_LABELS[r.doc_type] || r.doc_subtype || r.doc_type || "Altro",
+        name: TYPE_SUBTYPE_LABELS[key] || TYPE_SUBTYPE_LABELS[r.doc_type] || r.doc_subtype || r.doc_type || "Other",
         value: Number(r.count),
         color: TYPE_COLORS[i % TYPE_COLORS.length],
       };
     });
 
-  const SCADENZA_LABELS = {
+  const DUE_DATE_LABELS = {
     "60 days": "60 days",
     "30 days": "30 days",
-    "10 days": "10 giorni",
-    "1 day": "1 giorno",
-    "Due today": "Scade oggi",
-    "Overdue": "Scaduto",
+    "10 days": "10 days",
+    "1 day": "1 day",
+    "Due today": "Due today",
+    "Overdue": "Overdue",
   };
-  const scadenzaData = (trends?.scadenzaDistribution || [])
+  const dueDateData = (trends?.dueDateDistribution || [])
     .filter((r) => Number(r.count) > 0)
     .map((r) => ({
-      name: SCADENZA_LABELS[r.name] || r.name,
+      name: DUE_DATE_LABELS[r.name] || r.name,
       count: Number(r.count),
       fill: r.color || "#94a3b8",
     }));
 
-  // Dati per spesa nel tempo (line) - aggregato per MESE (es. Feb 2026)
+  // Spending over time (line) - aggregated by month (e.g. Feb 2026)
   const spendingTrend = trends?.spendingTrend || [];
   const spendingData = spendingTrend
     .filter((row) => row?.month)
@@ -155,7 +155,7 @@ const Dashboard = () => {
       ? Object.keys(spendingData[0]).filter((k) => k !== "month" && k !== "")
       : [];
 
-  // Dati per line chart upload trend
+  // Upload trend line chart data
   const uploadData =
     trends?.uploadTrend?.map((item) => ({
       date: new Date(item.date).toLocaleDateString("en-US", {
@@ -165,7 +165,7 @@ const Dashboard = () => {
       count: item.count,
     })) || [];
 
-  // Totale importi
+  // Total amounts
   const totalAmounts = overview?.amounts || {};
   const amountDisplay = Object.entries(totalAmounts)
     .filter(([, amount]) => amount != null)
@@ -245,13 +245,13 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Row 1: Ultimi caricamenti + Tipo fattura */}
+        {/* Row 1: Latest uploads + Document type */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Ultimi caricamenti */}
+          {/* Latest uploads */}
           <div className="bg-white rounded-lg border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
               <FiClock className="w-5 h-5" />
-              Ultimi caricamenti
+              Latest uploads
             </h2>
             {latestDocuments.length > 0 ? (
               <ul className="space-y-2">
@@ -273,7 +273,7 @@ const Dashboard = () => {
                             {meta.label}
                           </span>
                           <span className="text-xs text-slate-500">
-                            {new Date(doc.uploaded_at).toLocaleDateString("it-IT")}
+                            {new Date(doc.uploaded_at).toLocaleDateString("en-US")}
                           </span>
                         </div>
                       </Link>
@@ -283,15 +283,15 @@ const Dashboard = () => {
               </ul>
             ) : (
               <div className="h-[200px] flex items-center justify-center text-slate-500">
-                Nessun documento caricato
+                No documents uploaded yet
               </div>
             )}
           </div>
 
-          {/* Tipo documento (pie) */}
+          {/* Document type (pie) */}
           <div className="bg-white rounded-lg border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              Tipo di documento
+              Document type
             </h2>
             {typeData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280} className="[&_*]:outline-none">
@@ -317,28 +317,28 @@ const Dashboard = () => {
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-slate-500">
-                Nessun dato disponibile
+                No data available
               </div>
             )}
           </div>
         </div>
 
-        {/* Row 2: Scadenze imminenti + Spesa nel tempo */}
+        {/* Row 2: Upcoming due dates + Spending over time */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Scadenze imminenti */}
+          {/* Upcoming due dates */}
           <div className="bg-white rounded-lg border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              Scadenze imminenti
+              Upcoming due dates
             </h2>
-            {scadenzaData.length > 0 ? (
+            {dueDateData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280} className="[&_*]:outline-none">
-                <BarChart data={scadenzaData} layout="vertical" margin={{ left: 20, right: 8 }} cursor={false}>
+                <BarChart data={dueDateData} layout="vertical" margin={{ left: 20, right: 8 }} cursor={false}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis type="number" allowDecimals={false} />
                   <YAxis type="category" dataKey="name" width={28} tick={{ fontSize: 10 }} />
                   <Tooltip cursor={false} />
                   <Bar dataKey="count" name="Documenti" radius={[0, 4, 4, 0]} activeBar={false}>
-                    {scadenzaData.map((entry, i) => (
+                    {dueDateData.map((entry, i) => (
                       <Cell key={i} fill={entry.fill} />
                     ))}
                   </Bar>
@@ -346,12 +346,12 @@ const Dashboard = () => {
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-slate-500">
-                Nessun documento con scadenza nei prossimi 60 giorni
+                No documents with due dates in the next 60 days
               </div>
             )}
           </div>
 
-          {/* Spesa nel tempo */}
+          {/* Spending over time */}
           <div className="bg-white rounded-lg border border-slate-200 p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-1 flex items-center gap-2">
               <FiDollarSign className="w-5 h-5" />
@@ -366,14 +366,14 @@ const Dashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis
-                    tickFormatter={(v) => (typeof v === "number" ? v.toLocaleString("it-IT") : v)}
+                    tickFormatter={(v) => (typeof v === "number" ? v.toLocaleString("en-US") : v)}
                     domain={["auto", "auto"]}
                   />
                   <Tooltip
                     cursor={false}
                     formatter={(value) =>
                       typeof value === "number"
-                        ? value.toLocaleString("it-IT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        ? value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                         : value
                     }
                   />
@@ -395,7 +395,7 @@ const Dashboard = () => {
               </ResponsiveContainer>
             ) : (
               <div className="h-[280px] flex items-center justify-center text-slate-500">
-                Nessun dato di spesa
+                No spending data
               </div>
             )}
           </div>
@@ -405,7 +405,7 @@ const Dashboard = () => {
         <div className="bg-white rounded-lg border border-slate-200 p-6">
           <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
             <FiTrendingUp className="w-5 h-5" />
-            Upload trend (ultimi 30 giorni)
+            Upload trend (last 30 days)
           </h2>
           {uploadData.length > 0 ? (
             <ResponsiveContainer width="100%" height={280} className="[&_*]:outline-none">
@@ -420,14 +420,14 @@ const Dashboard = () => {
                   dataKey="count"
                   stroke="#10b981"
                   strokeWidth={2}
-                  name="Documenti"
+                  name="Documents"
                   activeDot={false}
                 />
               </LineChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-[280px] flex items-center justify-center text-slate-500">
-              Nessun upload negli ultimi 30 giorni
+              No uploads in the last 30 days
             </div>
           )}
         </div>

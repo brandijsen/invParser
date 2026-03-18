@@ -2,7 +2,7 @@ import { SupplierModel } from "../models/supplier.model.js";
 import logger from "../utils/logger.js";
 
 /**
- * Estrae dati seller dal parsed_json.semantic
+ * Extracts seller data from parsed_json.semantic
  */
 function extractSellerFromSemantic(semantic) {
   if (!semantic?.seller) return null;
@@ -27,7 +27,7 @@ function extractSellerFromSemantic(semantic) {
 }
 
 /**
- * Salva/aggiorna fornitore da dati estratti e collega al documento
+ * Saves/updates supplier from extracted data and links to document
  */
 export async function upsertSupplierFromDocument(userId, documentId, semantic) {
   const seller = extractSellerFromSemantic(semantic);

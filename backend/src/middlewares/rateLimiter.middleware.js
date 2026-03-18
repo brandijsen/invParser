@@ -7,7 +7,7 @@ const isRedisReady = () => redisConnection.status === "ready";
 
 /**
  * Rate Limiter Globale
- * Max 100 richieste ogni 15 minuti per IP
+ * Max 100 requests every 15 minutes per IP
  */
 export const globalRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -26,8 +26,8 @@ export const globalRateLimiter = rateLimit({
 });
 
 /**
- * Rate Limiter per Login/Register
- * Max 5 tentativi falliti ogni 15 minuti per IP
+ * Rate Limiter for Login/Register
+ * Max 5 failed attempts every 15 minutes per IP
  */
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -45,7 +45,7 @@ export const authRateLimiter = rateLimit({
 });
 
 /**
- * Upload Limiter - Max 50 upload al giorno per utente
+ * Upload Limiter - Max 50 uploads per day per user
  */
 export const uploadRateLimiter = async (req, res, next) => {
   try {
@@ -104,7 +104,7 @@ export const uploadRateLimiter = async (req, res, next) => {
 
 /**
  * Stats Rate Limiter
- * Max 30 richieste al minuto per utente
+ * Max 30 requests per minute per user
  */
 export const statsRateLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,

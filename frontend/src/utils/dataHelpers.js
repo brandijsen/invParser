@@ -1,5 +1,5 @@
 /**
- * Helper per estrarre valori da campi che possono essere:
+ * Helper to extract values from fields that can be:
  * - Semplici: "5050.00" o 22
  * - Con confidence: { value: "5050.00", confidence: 95 }
  */
@@ -7,7 +7,7 @@
 export function extractValue(field) {
   if (field === null || field === undefined) return null;
   
-  // Se è un oggetto con value, estrai value
+  // If it's an object with value, extract value
   if (typeof field === "object" && "value" in field) {
     return field.value;
   }
@@ -34,7 +34,7 @@ export function extractNestedValue(obj, path) {
 }
 
 /**
- * Normalizza l'intero amounts object per compatibilità
+ * Normalizes the whole amounts object for compatibility
  * Converte { value, confidence } → value
  */
 export function normalizeAmounts(amounts) {

@@ -270,7 +270,7 @@ const Documents = () => {
     fetchDocuments(1, resetFilters);
   };
 
-  // Aggiorna URL con filtri e pagina corrente
+  // Update URL with filters and current page
   const updateURL = ({ page, status, dateFrom, dateTo, search, defective, supplier, tag }) => {
     const params = new URLSearchParams();
     

@@ -55,7 +55,7 @@ Each item: { "description": "...", "quantity": number, "unit_price": "0.00", "am
 - Max 30 items; use dot as decimal separator
 `;
 
-    // Define rules and JSON structure per subtype
+    // Define rules and JSON structure for each subtype
     let specificRules = "";
     let jsonStructure = "";
 

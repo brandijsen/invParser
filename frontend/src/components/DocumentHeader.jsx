@@ -37,7 +37,7 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
         responseType: "blob"
       });
 
-      // Crea download link
+      // Create download link
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = window.document.createElement("a");
       link.href = url;
@@ -72,7 +72,7 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
             <span className="text-sm">{document?.original_name || "—"}</span>
           </div>
 
-          {/* Invoice Number & Date (se estratti) */}
+          {/* Invoice Number & Date (when extracted) */}
           {(parsed?.semantic?.invoice_number || parsed?.semantic?.invoice_date) && (
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-slate-600">
               {parsed?.semantic?.invoice_number && (
@@ -96,9 +96,9 @@ const DocumentHeader = ({ document, parsed, resultMetadata }) => {
             </span>
             <span
               className="text-xs text-slate-400"
-              title="Identificativo univoco del documento. Non è un conteggio: ogni utente vede solo i propri documenti."
+              title="Unique document identifier. Not a count: each user sees only their own documents."
             >
-              Rif. #{document?.id}
+              Ref. #{document?.id}
             </span>
           </div>
 

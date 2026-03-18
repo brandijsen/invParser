@@ -2,17 +2,17 @@
  * ============================================================================
  * VALIDATION RULES SERVICE
  * ============================================================================
- * Controlla la consistenza matematica e logica dei dati estratti dall'AI
- * per intercettare errori "silent" che l'AI non rileva autonomamente.
+ * Checks mathematical and logical consistency of AI-extracted data
+ * to intercept "silent" errors that the AI does not detect on its own.
  * 
- * CRITICAL: Questo modulo aggiunge un layer di sicurezza per la produzione
+ * CRITICAL: This module adds a security layer for production
  * ============================================================================
  */
 
-const TOLERANCE = 0.01; // Tolleranza per confronti decimali (±1 centesimo)
+const TOLERANCE = 0.01; // Tolerance for decimal comparison (±1 cent)
 
 /**
- * Valida i dati estratti e restituisce un oggetto con i flag di validazione
+ * Validates extracted data and returns an object with validation flags
  * @param {Object} semantic - Dati estratti dall'AI (semantic.amounts)
  * @param {String} document_subtype - Tipo di documento (professional_fee, standard, etc)
  * @returns {Object} - { isValid: boolean, flags: [...], validatedData: {...} }
@@ -84,7 +84,7 @@ function validateProfessionalFee(amounts, flags) {
   const stampDuty = getNumericValue(amounts.stamp_duty?.amount);
   const netPayable = getNumericValue(amounts.net_payable);
 
-  // 🔴 CRITICAL: Net payable > Gross * 2 (errore palese)
+  // 🔴 CRITICAL: Net payable > Gross * 2 (obvious error)
   if (grossFee && netPayable && netPayable > grossFee * 2) {
     flags.push({
       field: "net_payable",
@@ -94,7 +94,7 @@ function validateProfessionalFee(amounts, flags) {
     });
   }
 
-  // 🟠 HIGH: Withholding > Gross (impossibile)
+  // 🟠 HIGH: Withholding > Gross (impossible)
   if (grossFee && withholdingAmount && withholdingAmount > grossFee) {
     flags.push({
       field: "withholding_tax.amount",
@@ -192,7 +192,7 @@ function validateStandardInvoice(amounts, flags) {
   const vatRate = getNumericValue(amounts.vat?.rate);
   const total = getNumericValue(amounts.total_amount);
 
-  // 🔴 CRITICAL: Total > Subtotal * 2 (errore palese)
+  // 🔴 CRITICAL: Total > Subtotal * 2 (obvious error)
   if (subtotal && total && total > subtotal * 2) {
     flags.push({
       field: "total_amount",
@@ -316,7 +316,7 @@ function validateTaxExempt(amounts, flags) {
  * ============================================================================
  */
 function validateCommonRules(amounts, flags) {
-  // 🔴 CRITICAL: Negative amounts (salvo casi specifici già gestiti)
+  // 🔴 CRITICAL: Negative amounts (except specific cases already handled)
   for (const [key, value] of Object.entries(amounts)) {
     if (key === "currency") continue;
 
@@ -332,9 +332,9 @@ function validateCommonRules(amounts, flags) {
     }
   }
 
-  // 🟡 MEDIUM: VAT rate non standard (es: 25%, 15%)
+  // 🟡 MEDIUM: VAT rate non standard (e.g. 25%, 15%)
   const vatRate = getNumericValue(amounts.vat?.rate);
-  const standardRates = [0, 4, 5, 10, 22]; // Aliquote IVA italiane comuni
+  const standardRates = [0, 4, 5, 10, 22]; // Common VAT rates (IT/EU)
 
   if (vatRate !== null && !standardRates.includes(vatRate)) {
     flags.push({
@@ -382,12 +382,12 @@ function validateCommonRules(amounts, flags) {
  */
 
 /**
- * Estrae il valore numerico da un campo (gestisce sia { value, confidence } che valori diretti)
+ * Extracts numeric value from a field (handles both { value, confidence } and direct values)
  */
 function getNumericValue(field) {
   if (!field) return null;
 
-  // Se ha struttura { value, confidence }
+  // If it has structure { value, confidence }
   if (typeof field === "object" && "value" in field) {
     const val = field.value;
     if (typeof val === "string") {
@@ -396,10 +396,10 @@ function getNumericValue(field) {
     return typeof val === "number" ? val : null;
   }
 
-  // Se è un numero diretto
+  // If it's a direct number
   if (typeof field === "number") return field;
 
-  // Se è una stringa
+  // If it's a string
   if (typeof field === "string") {
     return parseFloat(field.replace(/,/g, ""));
   }
@@ -408,7 +408,7 @@ function getNumericValue(field) {
 }
 
 /**
- * Formatta il nome del campo per i messaggi
+ * Formats field name for messages
  */
 function formatFieldName(fieldKey) {
   return fieldKey
@@ -418,9 +418,9 @@ function formatFieldName(fieldKey) {
 
 /**
  * ============================================================================
- * EXPORT VALIDATION FLAGS PER IL FRONTEND
+ * EXPORT VALIDATION FLAGS FOR THE FRONTEND
  * ============================================================================
- * Converte i flag di validazione in un formato compatibile con RedFlagsAlert
+ * Converts validation flags to a format compatible with RedFlagsAlert
  */
 export function convertValidationFlagsToRedFlags(validationFlags) {
   return validationFlags.map((flag) => ({
@@ -436,14 +436,14 @@ export function convertValidationFlagsToRedFlags(validationFlags) {
 }
 
 /**
- * Converte severity in confidence score (per compatibilità con UI esistente)
+ * Converts severity to confidence score (for compatibility with existing UI)
  */
 function getSeverityScore(severity) {
   const severityMap = {
-    critical: 20, // 🔴 Grave
-    high: 40, // 🟠 Alto
-    medium: 55, // 🟡 Medio
-    low: 65, // 🔵 Basso (ma sotto threshold 70)
+    critical: 20, // 🔴 Critical
+    high: 40, // 🟠 High
+    medium: 55, // 🟡 Medium
+    low: 65, // 🔵 Low (but below threshold 70)
   };
 
   return severityMap[severity] || 50;

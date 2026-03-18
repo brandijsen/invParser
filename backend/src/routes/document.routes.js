@@ -48,7 +48,7 @@ router.post(
   "/upload",
   protect,
   uploadRateLimiter,
-  uploadPDF.array("files", 20), // Max 20 file per volta
+  uploadPDF.array("files", 20), // Max 20 files at a time
   uploadDocument
 );
 

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { FiX, FiSave, FiAlertCircle } from "react-icons/fi";
 
 /**
- * Modal per l'edit manuale dei dati estratti
- * Mostra TUTTI i campi editabili, con evidenza sui red flags
+ * Modal for manual editing of extracted data
+ * Shows ALL editable fields, with emphasis on red flags
  */
 
 const EditDataModal = ({ parsed, onClose, onSave, documentId }) => {
@@ -131,7 +131,7 @@ const EditDataModal = ({ parsed, onClose, onSave, documentId }) => {
 // ===== Helper Functions =====
 
 /**
- * Estrae tutti i campi editabili da parsed_json
+ * Extracts all editable fields from parsed_json
  */
 function extractEditableFields(obj, path = "") {
   const fields = [];
@@ -182,7 +182,7 @@ function formatFieldLabel(path) {
 }
 
 /**
- * Determina il tipo di input in base al valore
+ * Determines input type based on value
  */
 function getInputType(value) {
   if (typeof value === "number") return "number";
@@ -191,7 +191,7 @@ function getInputType(value) {
 }
 
 /**
- * Aggiorna un campo nel parsed_json
+ * Updates a field in parsed_json
  */
 function updateFieldInData(data, fieldPath, newValue) {
   const pathParts = fieldPath.split(".");
@@ -214,7 +214,7 @@ function updateFieldInData(data, fieldPath, newValue) {
     "value" in current[lastKey]
   ) {
     current[lastKey].value = parseValue(newValue, current[lastKey].value);
-    current[lastKey].confidence = 100; // Confidence 100 per campi editati
+      current[lastKey].confidence = 100; // Confidence 100 for edited fields
   } else {
     current[lastKey] = { value: newValue, confidence: 100 };
   }
@@ -223,7 +223,7 @@ function updateFieldInData(data, fieldPath, newValue) {
 }
 
 /**
- * Parse del valore in base al tipo originale
+ * Parses value based on original type
  */
 function parseValue(newValue, originalValue) {
   if (typeof originalValue === "number") {

@@ -8,7 +8,7 @@ import { classifyDocument } from "../services/documentClassifier.service.js";
 import { validateExtractedData } from "../services/validationRules.service.js";
 import { markDocumentComplete } from "../services/batchNotification.service.js";
 import { upsertSupplierFromDocument } from "../services/supplier.service.js";
-import { syncScadenzaForDocument } from "../services/scadenzaTags.service.js";
+import { syncDueDateForDocument } from "../services/dueDateTags.service.js";
 import logger, { logJob, logError, logValidation } from "../utils/logger.js";
 
 logger.info("Document worker started");
@@ -32,7 +32,7 @@ const worker = new Worker(
         fileName: document.original_name 
       });
 
-      // 1️⃣ RAW TEXT (dynamic import per evitare crash pdfjs in serverless)
+      // 1️⃣ RAW TEXT (dynamic import to avoid pdfjs crash in serverless)
       const { extractTextFromPdf } = await import("../services/pdfExtractor.service.js");
       const rawText = await extractTextFromPdf(
         document.user_id,
@@ -87,7 +87,7 @@ const worker = new Worker(
           });
         }
       } else {
-        // 🚨 Documento NON è una fattura - aggiungi flag critico
+        // 🚨 Document is NOT an invoice - add critical flag
         logger.warn("Document is not an invoice", { 
           ...jobContext, 
           document_type,
@@ -113,7 +113,7 @@ const worker = new Worker(
 
       await DocumentResultModel.updateParsedJson(documentId, finalJson);
 
-      // 📋 Anagrafica fornitori: salva seller da fattura e collega documento
+      // 📋 Supplier registry: save seller from invoice and link document
       if (validationResult.validatedData) {
         await upsertSupplierFromDocument(
           document.user_id,
@@ -127,10 +127,10 @@ const worker = new Worker(
             document.user_id,
             validationResult.validatedData
           );
-        } catch (scadenzaErr) {
-          logError(scadenzaErr, {
+        } catch (dueDateErr) {
+          logError(dueDateErr, {
             ...jobContext,
-            operation: "sync_scadenza_tags"
+            operation: "sync_due_date_tags"
           });
         }
       }
@@ -143,7 +143,7 @@ const worker = new Worker(
         flagCount: validationResult.flags.length
       });
 
-      // 📧 Batch notification (raggruppa email per upload multipli)
+      // 📧 Batch notification (groups emails for multiple uploads)
       try {
         await markDocumentComplete(
           documentId,
@@ -152,7 +152,7 @@ const worker = new Worker(
           'done'
         );
       } catch (emailError) {
-        // Non bloccare il processing se email fallisce
+        // Do not block processing if email fails
         logError(emailError, { 
           ...jobContext, 
           operation: "batch_notification",
@@ -180,7 +180,7 @@ const worker = new Worker(
           err.message
         );
       } catch (emailError) {
-        // Non bloccare nemmeno se email errore fallisce
+        // Do not block even if error email fails
         logError(emailError, { 
           ...jobContext,
           operation: "batch_notification",

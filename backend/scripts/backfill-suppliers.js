@@ -1,8 +1,8 @@
 /**
- * Backfill suppliers da documenti già processati
- * Crea supplier per ogni documento che ha semantic.seller ma non supplier_id
+ * Backfill suppliers from already processed documents
+ * Creates supplier for each document that has semantic.seller but no supplier_id
  *
- * Esecuzione: node scripts/backfill-suppliers.js
+ * Run: node scripts/backfill-suppliers.js
  */
 import { pool } from "../src/config/db.js";
 import dotenv from "dotenv";
@@ -15,8 +15,6 @@ dotenv.config({ path: path.join(__dirname, "..", ".env") });
 import { upsertSupplierFromDocument } from "../src/services/supplier.service.js";
 
 async function main() {
-  console.log("Backfilling suppliers from documents...\n");
-
   const [rows] = await pool.execute(`
     SELECT d.id, d.user_id, dr.parsed_json
     FROM documents d
@@ -28,11 +26,8 @@ async function main() {
   `);
 
   if (rows.length === 0) {
-    console.log("No documents to process (all have suppliers or no seller data).");
     process.exit(0);
   }
-
-  console.log(`Found ${rows.length} document(s) to process.\n`);
 
   let created = 0;
   for (const row of rows) {
@@ -45,14 +40,12 @@ async function main() {
       const supplier = await upsertSupplierFromDocument(row.user_id, row.id, semantic);
       if (supplier) {
         created++;
-        console.log(`  ✓ Doc ${row.id}: ${supplier.name}`);
       }
     } catch (err) {
       console.error(`  ✗ Doc ${row.id}:`, err.message);
     }
   }
 
-  console.log(`\nDone. Created/linked ${created} supplier(s).`);
   process.exit(0);
 }
 

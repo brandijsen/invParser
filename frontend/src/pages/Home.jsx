@@ -16,7 +16,7 @@ const Home = () => {
   const [openAuth, setOpenAuth] = useState(false);
   const { user } = useSelector((state) => state.auth);
 
-  // Se l'utente è loggato, mostra versione personalizzata
+  // If user is logged in, show personalized version
   if (user) {
     return (
       <>

@@ -21,7 +21,7 @@ export const DocumentModel = {
   },
 
   async findByUser(userId, { page = 1, limit = 10, filters = {}, exportMode = false } = {}) {
-    // Assicurati che siano interi (protezione SQL injection)
+    // Ensure integers (SQL injection protection)
     const pageInt = Math.max(1, parseInt(page, 10) || 1);
     const limitInt = exportMode
       ? Math.min(10000, Math.max(1, parseInt(limit, 10) || 10000))
@@ -32,25 +32,25 @@ export const DocumentModel = {
     const whereClauses = ["user_id = ?"];
     const params = [userId];
 
-    // Filtro per status
+    // Filter by status
     if (filters.status && filters.status !== "all") {
       whereClauses.push("status = ?");
       params.push(filters.status);
     }
 
-    // Filtro per data (from)
+    // Filter by date (from)
     if (filters.dateFrom) {
       whereClauses.push("uploaded_at >= ?");
       params.push(filters.dateFrom);
     }
 
-    // Filtro per data (to)
+    // Filter by date (to)
     if (filters.dateTo) {
       whereClauses.push("uploaded_at <= ?");
       params.push(filters.dateTo + " 23:59:59");
     }
 
-    // Filtro per search full-text (nome file + contenuto)
+    // Filter by full-text search (filename + content)
     if (filters.search) {
       whereClauses.push(
         "(d.original_name LIKE ? OR dr.raw_text LIKE ?)"
@@ -58,19 +58,19 @@ export const DocumentModel = {
       params.push(`%${filters.search}%`, `%${filters.search}%`);
     }
 
-    // Filtro per defective
+    // Filter by defective
     if (filters.defective === "only") {
       whereClauses.push("d.is_defective = 1");
     } else if (filters.excludeDefective) {
       whereClauses.push("(d.is_defective = 0 OR d.is_defective IS NULL)");
     }
 
-    // Filtro per sole fatture (esclude non-invoice)
+    // Filter for invoices only (excludes non-invoice)
     if (filters.invoiceOnly) {
       whereClauses.push("JSON_UNQUOTE(JSON_EXTRACT(dr.parsed_json, '$.document_type')) = 'invoice'");
     }
 
-    // Filtro per supplier
+    // Filter by supplier
     if (filters.supplier && filters.supplier !== "all") {
       const supplierId = parseInt(filters.supplier, 10);
       if (!isNaN(supplierId)) {
@@ -93,7 +93,7 @@ export const DocumentModel = {
       .map(clause => clause.replace(/^(user_id|status|uploaded_at|original_name)/, 'd.$1'))
       .join(" AND ");
 
-    // Query per i documenti paginati con JOIN per ricerca full-text + metadata
+    // Query for paginated documents with JOIN for full-text search + metadata
     const [rows] = await pool.execute(
       `
       SELECT DISTINCT 
@@ -119,7 +119,7 @@ export const DocumentModel = {
       params
     );
 
-    // Query per il conteggio totale
+    // Query for total count
     const [countRows] = await pool.execute(
       `SELECT COUNT(DISTINCT d.id) as total 
        FROM documents d

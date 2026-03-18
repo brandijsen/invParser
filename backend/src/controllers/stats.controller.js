@@ -2,7 +2,7 @@ import { StatsModel } from "../models/stats.model.js";
 
 /**
  * GET /api/stats/overview
- * Restituisce statistiche generali
+ * Returns general statistics
  */
 export const getOverview = async (req, res) => {
   try {
@@ -17,7 +17,7 @@ export const getOverview = async (req, res) => {
 
 /**
  * GET /api/stats/trends
- * Restituisce trend di upload, distribuzione tipi, scadenze, spesa
+ * Returns upload trend, type distribution, due dates, spending
  */
 export const getTrends = async (req, res) => {
   try {
@@ -36,21 +36,21 @@ export const getTrends = async (req, res) => {
     const [
       uploadTrend,
       typeDistribution,
-      scadenzaDistribution,
+      dueDateDistribution,
       spendingTrend,
       latestDocuments,
     ] = await Promise.all([
       fetchSafe(() => StatsModel.getUploadTrend(userId, days), []),
       fetchSafe(() => StatsModel.getDocumentTypeDistribution(userId), []),
-      fetchSafe(() => StatsModel.getScadenzaDistribution(userId), []),
-      fetchSafe(() => StatsModel.getSpendingTrend(userId, 90), []), // Spesa: sempre 90 gg
+      fetchSafe(() => StatsModel.getDueDateDistribution(userId), []),
+      fetchSafe(() => StatsModel.getSpendingTrend(userId, 90), []), // Spending: always 90 days
       fetchSafe(() => StatsModel.getLatestDocuments(userId, 5), []),
     ]);
 
     res.json({
       uploadTrend,
       typeDistribution,
-      scadenzaDistribution,
+      dueDateDistribution,
       spendingTrend,
       latestDocuments,
     });

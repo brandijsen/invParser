@@ -18,7 +18,7 @@ const VerifySuccess = () => {
         // reset user precedente
         localStorage.removeItem("user");
 
-        // salva SOLO access token
+        // save only access token
         localStorage.setItem("accessToken", token);
 
         // fetch utente aggiornato

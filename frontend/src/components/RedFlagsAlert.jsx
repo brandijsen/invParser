@@ -1,9 +1,9 @@
 import { FiAlertTriangle, FiAlertCircle } from "react-icons/fi";
 
 /**
- * Componente per visualizzare i campi con bassa confidence (red flags)
- * + VALIDATION FLAGS (errori matematici/logici)
- * Mostra sia i campi problematici che richiedono verifica manuale
+ * Component to display fields with low confidence (red flags)
+ * + VALIDATION FLAGS (mathematical/logical errors)
+ * Shows both problematic fields and those requiring manual verification
  */
 
 const RedFlagsAlert = ({ parsed, validationFlags }) => {
@@ -56,7 +56,7 @@ const RedFlagsAlert = ({ parsed, validationFlags }) => {
                       </span>
                     </div>
 
-                    {/* ✅ NEW: Mostra messaggio per validation flags */}
+                    {/* ✅ NEW: Show message for validation flags */}
                     {field.message && (
                       <div className="text-sm text-slate-700 mb-2">
                         {field.message}
@@ -75,7 +75,7 @@ const RedFlagsAlert = ({ parsed, validationFlags }) => {
                       </div>
                     )}
 
-                    {/* Valore estratto (solo per confidence flags) */}
+                    {/* Extracted value (for confidence flags only) */}
                     {field.value !== undefined && (
                       <div className="text-sm text-slate-700 font-mono bg-slate-50 px-3 py-2 rounded border border-slate-200">
                         {formatValue(field.value)}
@@ -95,7 +95,7 @@ const RedFlagsAlert = ({ parsed, validationFlags }) => {
 // ===== Helper Functions =====
 
 /**
- * Estrae i campi con confidence score da un oggetto nested
+ * Extracts fields with confidence score from a nested object
  */
 function extractFieldsWithConfidence(obj, path = "") {
   const fields = [];
@@ -103,7 +103,7 @@ function extractFieldsWithConfidence(obj, path = "") {
   function traverse(current, currentPath) {
     if (!current || typeof current !== "object") return;
 
-    // Se ha value e confidence, è un campo
+    // If it has value and confidence, it's a field
     if ("value" in current && "confidence" in current) {
       fields.push({
         path: currentPath,
@@ -143,18 +143,18 @@ function identifyRedFlags(parsedJson, threshold = 70) {
 }
 
 /**
- * ✅ NEW: Merge confidence-based flags con validation flags
+ * ✅ NEW: Merge confidence-based flags with validation flags
  */
 function mergeFlags(confidenceFlags, validationFlags) {
   const merged = [...confidenceFlags];
 
-  // Aggiungi validation flags con formato uniforme
+  // Add validation flags with uniform format
   validationFlags.forEach((vFlag) => {
     merged.push({
       path: vFlag.field,
       label: vFlag.field ? formatFieldLabel(vFlag.field) : "Unknown Field",
       severity: vFlag.severity || "medium",
-      confidence: null, // N/A per validation flags
+      confidence: null, // N/A for validation flags
       message: vFlag.message,
       type: "validation", // ✅ tipo validation
       expected: vFlag.expected,
@@ -162,7 +162,7 @@ function mergeFlags(confidenceFlags, validationFlags) {
     });
   });
 
-  // Ordina per severity (critical > high > medium > low)
+  // Sort by severity (critical > high > medium > low)
   const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
   merged.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 
@@ -180,7 +180,7 @@ function getSeverity(confidence) {
 }
 
 /**
- * Colori per severity
+ * Colors for severity
  */
 function getSeverityColor(severity) {
   const colors = {
@@ -206,7 +206,7 @@ function getSeverityColor(severity) {
 }
 
 /**
- * Formatta il path del campo in una label leggibile
+ * Formats the field path into a readable label
  */
 function formatFieldLabel(path) {
   return path
@@ -220,7 +220,7 @@ function formatFieldLabel(path) {
 }
 
 /**
- * Formatta il valore per la visualizzazione
+ * Formats the value for display
  */
 function formatValue(value) {
   if (value === null || value === undefined) return "—";

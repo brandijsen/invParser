@@ -137,7 +137,7 @@ function App() {
               }
             />
 
-            {/* ACCOUNT DELETED (redirect da link email) */}
+            {/* ACCOUNT DELETED (redirect from email link) */}
             <Route path="/account-deleted" element={<AccountDeleted />} />
 
             {/* PASSWORD FLOW */}

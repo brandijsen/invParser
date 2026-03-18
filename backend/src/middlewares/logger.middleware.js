@@ -2,19 +2,19 @@ import logger from "../utils/logger.js";
 import { v4 as uuidv4 } from "uuid";
 
 /**
- * Middleware per logging automatico di tutte le richieste HTTP
- * Aggiunge:
- * - Request ID unico per tracciare l'intera operazione
- * - Log di inizio richiesta con metodo, path, user
- * - Log di fine richiesta con status code e durata
- * - Log automatico degli errori
+ * Middleware for automatic HTTP request logging
+ * Adds:
+ * - Unique request ID to track the entire operation
+ * - Request start log with method, path, user
+ * - Request end log with status code and duration
+ * - Automatic error logging
  */
 export const requestLogger = (req, res, next) => {
-  // Genera un ID unico per questa richiesta
+  // Generate unique ID for this request
   req.requestId = uuidv4();
   const startTime = Date.now();
 
-  // Context base per questa richiesta
+  // Base context for this request
   const requestContext = {
     requestId: req.requestId,
     method: req.method,
@@ -23,19 +23,19 @@ export const requestLogger = (req, res, next) => {
     userAgent: req.get("user-agent"),
   };
 
-  // Aggiungi userId se autenticato
+  // Add userId if authenticated
   if (req.user) {
     requestContext.userId = req.user.id;
     requestContext.userEmail = req.user.email;
   }
 
-  // Log inizio richiesta (solo in debug per non essere troppo verbose)
+  // Log request start (debug only to avoid verbosity)
   logger.debug("Incoming request", requestContext);
 
-  // Intercetta la risposta per loggare quando finisce
+  // Intercept response to log when it completes
   const originalSend = res.send;
   res.send = function (data) {
-    res.send = originalSend; // Ripristina il metodo originale
+    res.send = originalSend; // Restore original method
 
     const duration = Date.now() - startTime;
     const responseContext = {
@@ -44,22 +44,22 @@ export const requestLogger = (req, res, next) => {
       duration: `${duration}ms`,
     };
 
-    // Log in base allo status code e metodo
+    // Log based on status code and method
     if (res.statusCode >= 500) {
-      // Errori server: sempre ERROR
+      // Server errors: always ERROR
       logger.error("Request failed with server error", responseContext);
     } else if (res.statusCode >= 400) {
-      // Errori client: WARN
+      // Client errors: WARN
       logger.warn("Request failed with client error", responseContext);
     } else if (req.method !== 'GET') {
-      // POST/PUT/DELETE con successo: INFO (operazioni importanti)
+      // POST/PUT/DELETE success: INFO (important operations)
       logger.info("Request completed", responseContext);
     } else {
-      // GET con successo: DEBUG (verbose, nascosto di default)
+      // GET success: DEBUG (verbose, hidden by default)
       logger.debug("Request completed", responseContext);
     }
 
-    // Warn se la richiesta è lenta (> 3 secondi)
+    // Warn if request is slow (> 3 seconds)
     if (duration > 3000) {
       logger.warn("Slow request detected", {
         ...responseContext,
@@ -70,7 +70,7 @@ export const requestLogger = (req, res, next) => {
     return originalSend.call(this, data);
   };
 
-  // Gestione errori non catturati in questo request handler
+  // Uncaught error handling in this request handler
   res.on("error", (error) => {
     logger.error("Response stream error", {
       ...requestContext,
@@ -83,12 +83,12 @@ export const requestLogger = (req, res, next) => {
 };
 
 /**
- * Middleware di error handling centralizzato
- * Cattura tutti gli errori non gestiti e li logga in modo uniforme
- * Deve essere registrato DOPO tutte le routes
+ * Centralized error handling middleware
+ * Catches all unhandled errors and logs them uniformly
+ * MUST be registered AFTER all routes
  */
 export const errorHandler = (err, req, res, next) => {
-  // Context completo dell'errore
+  // Full error context
   const errorContext = {
     requestId: req.requestId,
     method: req.method,
@@ -101,19 +101,19 @@ export const errorHandler = (err, req, res, next) => {
     stack: err.stack,
   };
 
-  // Log l'errore
+  // Log the error
   logger.error("Unhandled error in request", errorContext);
 
-  // Determina lo status code
+  // Determine status code
   const statusCode = err.statusCode || err.status || 500;
 
-  // Risposta al client (NON esporre stack trace in produzione)
+  // Response to client (do NOT expose stack trace in production)
   const response = {
     message: err.message || "Internal server error",
-    requestId: req.requestId, // Per debugging lato client
+    requestId: req.requestId, // For client-side debugging
   };
 
-  // Solo in development, aggiungi dettagli extra
+  // In development only, add extra details
   if (process.env.NODE_ENV !== "production") {
     response.stack = err.stack;
     response.error = err;
@@ -123,8 +123,8 @@ export const errorHandler = (err, req, res, next) => {
 };
 
 /**
- * Crea un logger con contesto specifico per la richiesta corrente
- * Utile nei controller per avere automaticamente requestId e userId
+ * Creates a logger with context for the current request
+ * Useful in controllers to automatically have requestId and userId
  */
 export function getRequestLogger(req) {
   const context = {

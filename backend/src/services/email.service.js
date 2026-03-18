@@ -2,7 +2,7 @@ import { transporter } from "../config/email.js";
 import { logExternalAPI, logError } from "../utils/logger.js";
 
 /**
- * Template HTML per email di successo
+ * HTML template for success email
  */
 const getSuccessEmailTemplate = (userName, documentName, documentId) => {
   const dashboardUrl = `${process.env.FRONTEND_URL}/documents/${documentId}`;
@@ -133,7 +133,7 @@ const getSuccessEmailTemplate = (userName, documentName, documentId) => {
 };
 
 /**
- * Template HTML per email di errore
+ * HTML template for error email
  */
 const getErrorEmailTemplate = (userName, documentName, documentId, errorMessage) => {
   const dashboardUrl = `${process.env.FRONTEND_URL}/documents`;
@@ -311,7 +311,7 @@ const getErrorEmailTemplate = (userName, documentName, documentId, errorMessage)
 };
 
 /**
- * Template HTML per notifica modifica profilo
+ * HTML template for profile update notification
  */
 const getProfileUpdatedTemplate = (userName, changesSummary) => {
   return `
@@ -333,7 +333,7 @@ const getProfileUpdatedTemplate = (userName, changesSummary) => {
 };
 
 /**
- * Template HTML per notifica cambio password
+ * HTML template for password change notification
  */
 const getPasswordChangedTemplate = (userName) => {
   return `
@@ -379,7 +379,7 @@ export async function sendProfileUpdatedEmail(userEmail, userName, changesSummar
 }
 
 /**
- * Template email per conferma eliminazione account
+ * Email template for account deletion confirmation
  */
 const getDeleteAccountTemplate = (userName, confirmLink) => {
   return `
@@ -403,7 +403,7 @@ const getDeleteAccountTemplate = (userName, confirmLink) => {
 };
 
 /**
- * Invia email con link per confermare eliminazione account
+ * Sends email with link to confirm account deletion
  */
 export async function sendDeleteAccountEmail(userEmail, userName, confirmLink) {
   try {
@@ -449,7 +449,7 @@ export async function sendPasswordChangedEmail(userEmail, userName) {
 }
 
 /**
- * Invia email quando documento è processato con successo
+ * Sends email when document is processed successfully
  */
 export async function sendDocumentProcessedEmail(userEmail, userName, documentName, documentId) {
   try {

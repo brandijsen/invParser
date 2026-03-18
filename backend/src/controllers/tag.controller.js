@@ -1,5 +1,5 @@
 import { TagModel } from "../models/tag.model.js";
-import { ensureDefaultTagsForUser } from "../services/scadenzaTags.service.js";
+import { ensureDefaultTagsForUser } from "../services/dueDateTags.service.js";
 
 export async function listTags(req, res) {
   try {

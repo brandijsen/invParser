@@ -48,7 +48,7 @@ const DocumentFilters = ({ filters: parentFilters = defaultFilters, onFilterChan
       .catch(() => setSuppliers([]));
   };
 
-  // Valore unico per Status: include "defective" come opzione
+  // Unique value for Status: include "defective" as option
   const statusDisplayValue =
     filters.defective === "only" ? "defective" : filters.status;
 

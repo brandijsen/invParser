@@ -112,7 +112,7 @@ const Profile = () => {
       await api.post("/auth/request-delete");
       setDeleteEmailSent(true);
     } catch (err) {
-      setDeleteError(err?.response?.data?.message || "Richiesta non inviata");
+      setDeleteError(err?.response?.data?.message || "Request failed");
     } finally {
       setDeleteLoading(false);
     }
@@ -318,11 +318,11 @@ const Profile = () => {
       {deleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-4 sm:p-6 my-auto">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Elimina account</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete account</h3>
             {deleteEmailSent ? (
               <>
                 <p className="text-slate-600 text-sm mb-4">
-                  Ti abbiamo inviato un'email con un link per confermare l'eliminazione. Controlla la casella di posta (anche spam). Il link scade tra 24 ore.
+                  We sent you an email with a link to confirm deletion. Check your inbox (including spam). The link expires in 24 hours.
                 </p>
                 <button
                   type="button"
@@ -333,13 +333,13 @@ const Profile = () => {
                   }}
                   className="w-full px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-800"
                 >
-                  Chiudi
+                  Close
                 </button>
               </>
             ) : (
               <>
                 <p className="text-slate-600 text-sm mb-4">
-                  L'account e tutti i dati (documenti, fornitori, tag) saranno eliminati in modo permanente. Ti invieremo un'email con un link per confermare. L'azione è irreversibile.
+                  Your account and all data (documents, suppliers, tags) will be permanently deleted. We will send you an email with a link to confirm. This action is irreversible.
                 </p>
                 <form onSubmit={handleRequestDelete} className="space-y-4">
                   {deleteError && <p className="text-red-600 text-sm">{deleteError}</p>}
@@ -352,14 +352,14 @@ const Profile = () => {
                       }}
                       className="flex-1 px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50"
                     >
-                      Annulla
+                      Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={deleteLoading}
                       className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50"
                     >
-                      {deleteLoading ? "Invio…" : "Invia link via email"}
+                      {deleteLoading ? "Sending…" : "Send link via email"}
                     </button>
                   </div>
                 </form>

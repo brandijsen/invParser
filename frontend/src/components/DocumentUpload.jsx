@@ -24,7 +24,7 @@ const DocumentUpload = ({ onUploaded }) => {
       setTimeout(() => setError(""), 3000);
     }
 
-    // Crea queue items con stato iniziale
+    // Create queue items with initial state
     const queueItems = pdfFiles.map((file) => ({
       id: Math.random().toString(36).substr(2, 9),
       file,
@@ -39,14 +39,14 @@ const DocumentUpload = ({ onUploaded }) => {
     if (pdfFiles.length > 1) {
       await uploadBatchFiles(queueItems);
     } else {
-      // Upload singolo (retrocompatibilità)
+      // Single upload (backward compatibility)
       await uploadSingleFile(queueItems[0]);
     }
 
     // Refresh lista documenti dopo tutti gli upload
     onUploaded?.();
 
-    // Pulisci queue dopo 3 secondi
+    // Clear queue after 3 seconds
     setTimeout(() => {
       setUploadQueue((prev) =>
         prev.filter((q) => !queueItems.find((i) => i.id === q.id))
@@ -54,9 +54,9 @@ const DocumentUpload = ({ onUploaded }) => {
     }, 3000);
   };
 
-  // 🎯 NEW: Upload batch di file in una singola richiesta
+  // 🎯 NEW: Upload batch of files in a single request
   const uploadBatchFiles = async (queueItems) => {
-    // Marca tutti come "uploading"
+    // Mark all as "uploading"
     setUploadQueue((prev) =>
       prev.map((q) =>
         queueItems.find((i) => i.id === q.id)
@@ -68,7 +68,7 @@ const DocumentUpload = ({ onUploaded }) => {
     try {
       const formData = new FormData();
       
-      // Aggiungi tutti i file al FormData
+      // Add all files to FormData
       queueItems.forEach((item) => {
         formData.append("files", item.file);
       });
@@ -79,7 +79,7 @@ const DocumentUpload = ({ onUploaded }) => {
           const progress = Math.round(
             (progressEvent.loaded * 100) / progressEvent.total
           );
-          // Aggiorna progress per tutti i file nel batch
+          // Update progress for all files in batch
           setUploadQueue((prev) =>
             prev.map((q) =>
               queueItems.find((i) => i.id === q.id)
@@ -90,7 +90,7 @@ const DocumentUpload = ({ onUploaded }) => {
         },
       });
 
-      // Tutti i file uploadati con successo
+      // All files uploaded successfully
       setUploadQueue((prev) =>
         prev.map((q) =>
           queueItems.find((i) => i.id === q.id)
@@ -98,10 +98,8 @@ const DocumentUpload = ({ onUploaded }) => {
             : q
         )
       );
-
-      console.log("✅ Batch upload completato:", response.data);
     } catch (err) {
-      // 🛡️ Gestione Rate Limit (429)
+      // 🛡️ Rate Limit handling (429)
       if (err.response?.status === 429) {
         const errorData = err.response?.data;
         const retryAfter = errorData?.retryAfter || 30;
@@ -109,7 +107,7 @@ const DocumentUpload = ({ onUploaded }) => {
         
         setError(errorMsg);
         
-        // Marca tutti come errore con messaggio specifico
+        // Mark all as error with specific message
         setUploadQueue((prev) =>
           prev.map((q) =>
             queueItems.find((i) => i.id === q.id)
@@ -118,14 +116,14 @@ const DocumentUpload = ({ onUploaded }) => {
           )
         );
         
-        // Mantieni errore visibile per 5 secondi
+        // Keep error visible for 5 seconds
         setTimeout(() => setError(""), 5000);
         
         console.error("🛡️ Rate limit exceeded:", errorMsg);
         return;
       }
       
-      // Errore generico batch
+      // Generic batch error
       setUploadQueue((prev) =>
         prev.map((q) =>
           queueItems.find((i) => i.id === q.id)
@@ -147,7 +145,7 @@ const DocumentUpload = ({ onUploaded }) => {
 
     try {
       const formData = new FormData();
-      formData.append("files", queueItem.file); // Usa "files" per coerenza con batch
+      formData.append("files", queueItem.file); // Use "files" for batch consistency
 
       await api.post("/documents/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -170,7 +168,7 @@ const DocumentUpload = ({ onUploaded }) => {
         )
       );
     } catch (err) {
-      // 🛡️ Gestione Rate Limit (429)
+      // 🛡️ Rate Limit handling (429)
       if (err.response?.status === 429) {
         const errorData = err.response?.data;
         const retryAfter = errorData?.retryAfter || 30;
@@ -186,14 +184,14 @@ const DocumentUpload = ({ onUploaded }) => {
           )
         );
         
-        // Mantieni errore visibile per 5 secondi
+        // Keep error visible for 5 seconds
         setTimeout(() => setError(""), 5000);
         
         console.error("🛡️ Rate limit exceeded:", errorMsg);
         return;
       }
       
-      // Errore generico
+      // Generic error
       setUploadQueue((prev) =>
         prev.map((q) =>
           q.id === queueItem.id

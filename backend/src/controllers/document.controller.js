@@ -16,16 +16,16 @@ import { logError } from "../utils/logger.js";
 |--------------------------------------------------------------------------
 | UPLOAD DOCUMENT (supports single and multiple files)
 |--------------------------------------------------------------------------
-| - crea record documents
-| - mette in coda i job
-| - registra batch per notifiche raggruppate
-| - NON tocca document_results
+| - creates documents records
+| - queues jobs
+| - registers batch for grouped notifications
+| - does NOT touch document_results
 */
 export const uploadDocument = async (req, res) => {
   const log = getRequestLogger(req);
   
   try {
-    // Supporto sia single che multiple files
+    // Support both single and multiple files
     const files = req.files || (req.file ? [req.file] : []);
     
     if (files.length === 0) {
@@ -36,7 +36,7 @@ export const uploadDocument = async (req, res) => {
     const userId = req.user.id;
     const documents = [];
     
-    // Crea batch ID se upload multiplo (2+ files)
+    // Create batch ID if multiple upload (2+ files)
     const batchId = files.length > 1 ? createBatch(userId, files.length) : null;
 
     log.info("Document upload started", {
@@ -45,7 +45,7 @@ export const uploadDocument = async (req, res) => {
       fileNames: files.map(f => f.originalname)
     });
 
-    // Process ogni file
+    // Process each file
     for (const file of files) {
       const document = await DocumentService.upload({
         userId,
@@ -66,7 +66,7 @@ export const uploadDocument = async (req, res) => {
         });
       }
       
-      // Registra nel batch se upload multiplo
+      // Register in batch if multiple upload
       if (batchId) {
         await registerDocumentInBatch(batchId, document.id, file.originalname);
       }
@@ -154,7 +154,7 @@ export const getUserDocuments = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
 
-  // Filtri
+  // Filters
   const filters = {
     status: req.query.status || null,
     dateFrom: req.query.dateFrom || null,
@@ -311,7 +311,7 @@ export const getDocumentRaw = async (req, res) => {
         .json({ message: "Raw text not available yet" });
     }
 
-    // Anche se raw_text è vuoto o null, restituiscilo comunque
+    // Even if raw_text is empty or null, return it anyway
     res.json({ raw_text: result.raw_text || "" });
   } catch (err) {
     logError(err, {
@@ -351,7 +351,7 @@ export const downloadDocument = async (req, res) => {
 
     log.info("Document download started", { documentId, originalName: document.original_name });
 
-    // Invia il file come download
+    // Send file as download
     res.download(filePath, document.original_name, (err) => {
       if (err) {
         logError(err, {
@@ -403,7 +403,7 @@ export const exportDocumentsCSV = async (req, res) => {
 
     log.info("CSV export started", { userId, documentCount: documents.length });
 
-    // Arricchisci con parsed_json
+    // Enrich with parsed_json
     const enriched = await Promise.all(
       documents.map(async (doc) => {
         const result = await DocumentResultModel.findParsedByDocumentId(doc.id);
@@ -506,7 +506,7 @@ export const exportDocumentsExcel = async (req, res) => {
 
     log.info("Excel export started", { userId, documentCount: documents.length });
 
-    // Arricchisci con parsed_json
+    // Enrich with parsed_json
     const enriched = await Promise.all(
       documents.map(async (doc) => {
         const result = await DocumentResultModel.findParsedByDocumentId(doc.id);
@@ -634,7 +634,7 @@ export const unmarkDocumentDefective = async (req, res) => {
 
 /*
 |--------------------------------------------------------------------------
-| UPDATE DOCUMENT SUPPLIER (link documento a fornitore)
+| UPDATE DOCUMENT SUPPLIER (link document to supplier)
 |--------------------------------------------------------------------------
 */
 export const updateDocumentSupplier = async (req, res) => {

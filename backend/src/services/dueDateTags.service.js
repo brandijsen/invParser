@@ -20,7 +20,7 @@ const DUE_TAG_DEFS = [
 
 const PAID_TAG_NAME = "Paid";
 
-// Tag italiani creati per errore – rimuovi per evitare duplicati nel filtro
+// Legacy Italian tags created by mistake - remove to avoid duplicates in filter
 const REPLACED_TAG_NAMES = ["60 gg", "30 gg"];
 
 function getVal(obj) {
@@ -33,14 +33,14 @@ function parseDueDate(dueDateStr) {
   if (!dueDateStr || typeof dueDateStr !== "string") return null;
   const trimmed = dueDateStr.trim();
   if (!trimmed) return null;
-  // ISO YYYY-MM-DD (priorità: evita interpretazione errata)
+  // ISO YYYY-MM-DD (priority: avoid wrong interpretation)
   const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (isoMatch) {
     const [, y, m, day] = isoMatch;
     const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(day, 10));
     return isNaN(d.getTime()) ? null : d;
   }
-  // DD/MM/YYYY or DD-MM-YYYY (europeo)
+  // DD/MM/YYYY or DD-MM-YYYY (European)
   const euMatch = trimmed.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
   if (euMatch) {
     const [, day, month, year] = euMatch;
@@ -133,7 +133,7 @@ export async function ensureDefaultTagsForUser(userId) {
  * Sync due tag for a single document.
  * If document has "Paid" tag, we do NOT update (user marked as paid).
  */
-export async function syncScadenzaForDocument(documentId, userId, semantic) {
+export async function syncDueDateForDocument(documentId, userId, semantic) {
   const tagIds = await ensureDueTags(userId);
   const currentTags = await TagModel.getTagsForDocument(documentId, userId);
 
@@ -178,7 +178,7 @@ export async function syncScadenzaForDocument(documentId, userId, semantic) {
  * Re-sync due tags for all documents with due_date.
  * Runs periodically to update tags as days pass.
  */
-export async function syncScadenzaForAllDocuments() {
+export async function syncDueDatesForAllDocuments() {
   const [rows] = await pool.execute(
     `SELECT d.id AS document_id, d.user_id, dr.parsed_json
      FROM documents d
@@ -196,7 +196,7 @@ export async function syncScadenzaForAllDocuments() {
       const semantic = parsed?.semantic;
       if (!semantic) continue;
 
-      await syncScadenzaForDocument(row.document_id, row.user_id, semantic);
+      await syncDueDateForDocument(row.document_id, row.user_id, semantic);
       updated++;
     } catch (err) {
       logger.warn("Due tag sync failed for document", {

@@ -46,7 +46,7 @@ export const SupplierModel = {
   },
 
   /**
-   * Trova fornitore per VAT (priorità) o nome simile
+   * Finds supplier by VAT (priority) or similar name
    */
   async findMatch(userId, { vatNumber, name }) {
     if (vatNumber && vatNumber.trim()) {

@@ -4,7 +4,7 @@ import PageLoader from "./PageLoader";
 
 /**
  * Visualizzatore PDF in-app.
- * Scarica il PDF con auth e lo mostra tramite iframe.
+ * Downloads the PDF with auth and displays it via iframe.
  */
 const PdfViewer = ({ documentId, className = "" }) => {
   const [pdfUrl, setPdfUrl] = useState(null);

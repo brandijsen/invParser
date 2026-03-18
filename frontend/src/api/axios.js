@@ -1,15 +1,15 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
-  withCredentials: true, // 🔑 necessario per refresh token cookie
+  withCredentials: true, // 🔑 required for refresh token cookie
 });
 
 /*
 |--------------------------------------------------------------------------
 | REQUEST INTERCEPTOR
 |--------------------------------------------------------------------------
-| Aggiunge sempre l’access token (se presente)
+| Always adds the access token (if present)
 */
 api.interceptors.request.use(
   (config) => {
@@ -28,7 +28,7 @@ api.interceptors.request.use(
 |--------------------------------------------------------------------------
 | RESPONSE INTERCEPTOR
 |--------------------------------------------------------------------------
-| Se riceviamo 401 → tentiamo refresh token UNA SOLA VOLTA
+| On 401 → attempt refresh token ONCE
 */
 api.interceptors.response.use(
   (response) => response,
@@ -36,17 +36,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // ❌ Non è 401 → errore normale
+    // ❌ Not 401 → normal error
     if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    // ❌ Evita loop infinito
+    // ❌ Avoid infinite loop
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
 
-    // ❌ Non tentare refresh su refresh
+    // ❌ Do not retry refresh on refresh endpoint
     if (originalRequest.url.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
@@ -59,16 +59,16 @@ api.interceptors.response.use(
 
       const newAccessToken = res.data.accessToken;
 
-      // 💾 salva nuovo token
+      // 💾 save new token
       localStorage.setItem("accessToken", newAccessToken);
 
-      // 🔁 ripeti request originale
+      // 🔁 retry original request
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 
       return api(originalRequest);
 
     } catch (refreshError) {
-      // ❌ refresh fallito → logout forzato
+      // ❌ refresh failed → force logout
       localStorage.removeItem("accessToken");
       localStorage.removeItem("user");
 

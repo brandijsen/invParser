@@ -26,7 +26,7 @@ import { uploadAvatar } from "../middlewares/upload.middleware.js";
 
 const router = express.Router();
 
-// TRADIZIONALE (con rate limiting per brute force protection)
+// Traditional (with rate limiting for brute force protection)
 router.post("/register", authRateLimiter, register);
 router.post("/login", authRateLimiter, login);
 router.get("/me", protect, me);

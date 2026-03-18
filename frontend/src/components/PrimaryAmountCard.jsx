@@ -4,7 +4,7 @@ import { normalizeAmounts, extractValue } from "../utils/dataHelpers";
 const PrimaryAmountCard = ({ amounts, documentSubtype }) => {
   if (!amounts) return null;
 
-  // Normalizza amounts per gestire { value, confidence }
+  // Normalize amounts to handle { value, confidence }
   const normalized = normalizeAmounts(amounts);
 
   // Determine primary amount based on document type

@@ -1,12 +1,12 @@
 /**
  * Analizza i dati parsed e identifica i campi con confidence score < 70% (red flags)
- * Restituisce un array di campi problematici per la visualizzazione nell'UI
+ * Returns an array of problematic fields for UI display
  */
 
 const CONFIDENCE_THRESHOLD = 70;
 
 /**
- * Estrae tutti i campi con il loro confidence score da un oggetto nested
+ * Extracts all fields with their confidence score from a nested object
  */
 function extractFieldsWithConfidence(obj, path = "") {
   const fields = [];
@@ -14,7 +14,7 @@ function extractFieldsWithConfidence(obj, path = "") {
   function traverse(current, currentPath) {
     if (!current || typeof current !== "object") return;
 
-    // Se ha value e confidence, è un campo
+    // If it has value and confidence, it's a field
     if ("value" in current && "confidence" in current) {
       fields.push({
         path: currentPath,
@@ -55,7 +55,7 @@ export function identifyRedFlags(parsedJson, threshold = CONFIDENCE_THRESHOLD) {
 }
 
 /**
- * Determina la severity in base al confidence score
+ * Determines severity based on confidence score
  */
 function getSeverity(confidence) {
   if (confidence < 50) return "critical"; // 🔴 Molto problematico
@@ -81,7 +81,7 @@ function formatFieldLabel(path) {
 }
 
 /**
- * Calcola il confidence score medio di un documento
+ * Calculates the average confidence score of a document
  */
 export function calculateAverageConfidence(parsedJson) {
   if (!parsedJson) return 100;
@@ -103,7 +103,7 @@ export function hasRedFlags(parsedJson, threshold = CONFIDENCE_THRESHOLD) {
 }
 
 /**
- * Aggiorna un campo specifico nel parsed_json
+ * Updates a specific field in parsed_json
  */
 export function updateFieldValue(parsedJson, fieldPath, newValue) {
   const pathParts = fieldPath.split(".");
@@ -124,7 +124,7 @@ export function updateFieldValue(parsedJson, fieldPath, newValue) {
   // Se il campo ha structure { value, confidence }, aggiorna solo value
   if (current[lastKey] && typeof current[lastKey] === "object" && "value" in current[lastKey]) {
     current[lastKey].value = newValue;
-    // Impostiamo confidence a 100 per campi editati manualmente
+    // Set confidence to 100 for manually edited fields
     current[lastKey].confidence = 100;
   } else {
     // Altrimenti sostituisci direttamente
