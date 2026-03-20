@@ -32,7 +32,9 @@ const S3_ENV = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_S3_BUCKET"];
 
 function log(msg, level = "info") {
   const ts = new Date().toISOString();
-  return `[${ts}] [${level.toUpperCase()}] ${msg}`;
+  const line = `[${ts}] [${level.toUpperCase()}] ${msg}`;
+  console.log(line);
+  return line;
 }
 
 function runMysqldumpDocker() {
@@ -234,24 +236,51 @@ async function sendAlertEmail(subject, body) {
   const email = process.env.BACKUP_ALERT_EMAIL;
   if (!email) return;
 
-  try {
-    const nodemailer = (await import("nodemailer")).default;
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-    });
+  const from = process.env.EMAIL_FROM || "InvParser <noreply@invparser.local>";
+  const fullSubject = `[InvParser Backup] ${subject}`;
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
-      to: email,
-      subject: `[InvParser Backup] ${subject}`,
-      text: body,
-    });
+  try {
+    if (process.env.BREVO_API_KEY) {
+      const fromMatch = String(from).match(/^"?([^"<]+)"?\s*<([^>]+)>$/);
+      const senderName = fromMatch ? fromMatch[1].trim() : "InvParser";
+      const senderEmail = fromMatch ? fromMatch[2].trim() : from;
+
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email }],
+          subject: fullSubject,
+          htmlContent: body.replace(/\n/g, "<br>"),
+          textContent: body,
+        }),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`Brevo ${res.status}: ${txt}`);
+      }
+    } else {
+      const nodemailer = (await import("nodemailer")).default;
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: Number(process.env.SMTP_PORT) === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+      await transporter.sendMail({
+        from,
+        to: email,
+        subject: fullSubject,
+        text: body,
+      });
+    }
     log(`Alert email sent to ${email}`);
   } catch (err) {
     log(`Failed to send alert email: ${err.message}`, "error");

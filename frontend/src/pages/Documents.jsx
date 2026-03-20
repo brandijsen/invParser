@@ -50,6 +50,8 @@ const Documents = () => {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState(null); // single doc: show inline confirm
+  const [confirmingBulkDelete, setConfirmingBulkDelete] = useState(false); // bulk: show inline in bar
   
   // Inizializza filtri dalla URL
   const [filters, setFilters] = useState({
@@ -125,17 +127,23 @@ const Documents = () => {
     }
   };
 
-  const deleteDocument = async (documentId) => {
-    if (!window.confirm("Are you sure you want to delete this document?")) {
-      return;
-    }
+  const confirmDeleteSingle = (documentId) => {
+    setConfirmingDeleteId(documentId);
+  };
 
+  const cancelDeleteSingle = () => setConfirmingDeleteId(null);
+
+  const performDeleteSingle = async (documentId) => {
+    setConfirmingDeleteId(null);
+    setBulkProcessing(true);
     try {
       await api.delete(`/documents/${documentId}`);
       await fetchDocuments();
+      showToast("Document deleted");
     } catch (err) {
-      console.error("Delete failed", err);
       showToast("Unable to delete document");
+    } finally {
+      setBulkProcessing(false);
     }
   };
 
@@ -156,28 +164,10 @@ const Documents = () => {
     }
   };
 
-  // Bulk delete
-  const bulkDelete = async () => {
+  // Bulk delete - opens confirm modal
+  const openBulkDeleteConfirm = () => {
     if (selectedIds.length === 0) return;
-
-    if (!window.confirm(`Delete ${selectedIds.length} selected document(s)?`)) {
-      return;
-    }
-
-    setBulkProcessing(true);
-
-    try {
-      await Promise.all(
-        selectedIds.map((id) => api.delete(`/documents/${id}`))
-      );
-      setSelectedIds([]);
-      await fetchDocuments();
-    } catch (err) {
-      console.error("Bulk delete failed", err);
-      showToast("Some documents could not be deleted");
-    } finally {
-      setBulkProcessing(false);
-    }
+    setDeleteConfirm({ bulk: [...selectedIds] });
   };
 
   // Bulk retry
@@ -363,37 +353,59 @@ const Documents = () => {
             {hasSelection && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <span className="text-sm font-medium text-emerald-800">
-                  {selectedIds.length} document(s) selected
+                  {confirmingBulkDelete
+                    ? `Delete ${selectedIds.length} document(s)?`
+                    : `${selectedIds.length} document(s) selected`}
                 </span>
 
                 <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={bulkUnmarkDefective}
-                    disabled={bulkProcessing || !selectedIds.some((id) => documents.find((d) => d.id === id)?.is_defective === 1)}
-                    className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {bulkProcessing ? "Processing…" : "✓ Unmark Defective"}
-                  </button>
-                  <button
-                    onClick={bulkRetry}
-                    disabled={bulkProcessing}
-                    className="px-4 py-2 rounded-md bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {bulkProcessing ? "Processing…" : "🔁 Retry Failed"}
-                  </button>
-                  <button
-                    onClick={bulkDelete}
-                    disabled={bulkProcessing}
-                    className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {bulkProcessing ? "Deleting…" : "🗑 Delete Selected"}
-                  </button>
-                  <button
-                    onClick={() => setSelectedIds([])}
-                    className="px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50"
-                  >
-                    Clear Selection
-                  </button>
+                  {confirmingBulkDelete ? (
+                    <>
+                      <button
+                        onClick={() => setConfirmingBulkDelete(false)}
+                        className="px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={performBulkDelete}
+                        disabled={bulkProcessing}
+                        className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {bulkProcessing ? "Deleting…" : "Delete"}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={bulkUnmarkDefective}
+                        disabled={bulkProcessing || !selectedIds.some((id) => documents.find((d) => d.id === id)?.is_defective === 1)}
+                        className="px-4 py-2 rounded-md bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {bulkProcessing ? "Processing…" : "✓ Unmark Defective"}
+                      </button>
+                      <button
+                        onClick={bulkRetry}
+                        disabled={bulkProcessing}
+                        className="px-4 py-2 rounded-md bg-amber-600 text-white text-sm font-medium hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {bulkProcessing ? "Processing…" : "🔁 Retry Failed"}
+                      </button>
+                      <button
+                        onClick={() => setConfirmingBulkDelete(true)}
+                        disabled={bulkProcessing}
+                        className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        🗑 Delete Selected
+                      </button>
+                      <button
+                        onClick={() => setSelectedIds([])}
+                        className="px-4 py-2 rounded-md bg-white border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-50"
+                      >
+                        Clear Selection
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -501,22 +513,42 @@ const Documents = () => {
                         </td>
 
                         <td className="px-6 py-4">
-                          {doc.status === "failed" && (
-                            <button
-                              onClick={() => retryDocument(doc.id)}
-                              disabled={retryingId === doc.id}
-                              className="text-xs px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
-                            >
-                              {retryingId === doc.id ? "Retrying…" : "🔁 Retry"}
-                            </button>
+                          {confirmingDeleteId === doc.id ? (
+                            <span className="flex items-center gap-1">
+                              <span className="text-xs text-slate-600 mr-1">Delete?</span>
+                              <button
+                                onClick={cancelDeleteSingle}
+                                className="text-xs px-2 py-1 rounded border border-slate-300 text-slate-600 hover:bg-slate-100"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => performDeleteSingle(doc.id)}
+                                disabled={bulkProcessing}
+                                className="text-xs px-2 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                              >
+                                Delete
+                              </button>
+                            </span>
+                          ) : (
+                            <>
+                              {doc.status === "failed" && (
+                                <button
+                                  onClick={() => retryDocument(doc.id)}
+                                  disabled={retryingId === doc.id}
+                                  className="text-xs px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                                >
+                                  {retryingId === doc.id ? "Retrying…" : "🔁 Retry"}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => confirmDeleteSingle(doc.id)}
+                                className="ml-2 text-xs px-3 py-1 rounded bg-slate-200 text-slate-800 hover:bg-slate-300"
+                              >
+                                🗑 Delete
+                              </button>
+                            </>
                           )}
-
-                          <button
-                            onClick={() => deleteDocument(doc.id)}
-                            className="ml-2 text-xs px-3 py-1 rounded bg-slate-200 text-slate-800 hover:bg-slate-300"
-                          >
-                            🗑 Delete
-                          </button>
                         </td>
                       </tr>
                     );

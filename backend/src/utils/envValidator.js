@@ -20,17 +20,10 @@ const REQUIRED_ENV_VARS = [
   { name: "JWT_SECRET", description: "JWT secret key" },
   { name: "JWT_REFRESH_SECRET", description: "JWT refresh secret key" },
   
-  // Redis
-  { name: "REDIS_HOST", description: "Redis host" },
-  
   // OpenAI
   { name: "OPENAI_API_KEY", description: "OpenAI API key for AI parsing" },
   
-  // SMTP Email
-  { name: "SMTP_HOST", description: "SMTP server host" },
-  { name: "SMTP_PORT", description: "SMTP server port" },
-  { name: "SMTP_USER", description: "SMTP username" },
-  { name: "SMTP_PASS", description: "SMTP password" },
+  // Email: EMAIL_FROM always; SMTP_* OR BREVO_API_KEY
   { name: "EMAIL_FROM", description: "Email sender address" },
   
   // URLs
@@ -59,13 +52,37 @@ export function validateEnv() {
   // Check required variables (CRITICAL)
   for (const envVar of REQUIRED_ENV_VARS) {
     const value = process.env[envVar.name];
-    
     if (!value || value.trim() === "") {
       missing.push({
         name: envVar.name,
         description: envVar.description,
       });
     }
+  }
+
+  // Redis: need REDIS_URL OR (REDIS_HOST)
+  const hasRedis =
+    (process.env.REDIS_URL && process.env.REDIS_URL.trim()) ||
+    (process.env.REDIS_HOST && process.env.REDIS_HOST.trim());
+  if (!hasRedis) {
+    missing.push({
+      name: "REDIS_URL or REDIS_HOST",
+      description: "Redis connection (REDIS_URL or REDIS_HOST + REDIS_PORT)",
+    });
+  }
+
+  // Email: need EMAIL_FROM + (BREVO_API_KEY OR all SMTP_*)
+  const hasBrevo = process.env.BREVO_API_KEY && process.env.BREVO_API_KEY.trim();
+  const hasSmtp =
+    process.env.SMTP_HOST &&
+    process.env.SMTP_PORT &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS;
+  if (!hasBrevo && !hasSmtp) {
+    missing.push({
+      name: "BREVO_API_KEY or SMTP_*",
+      description: "Email: set BREVO_API_KEY (Brevo) or SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS",
+    });
   }
 
   // Check optional variables (WARNING)
@@ -78,6 +95,22 @@ export function validateEnv() {
         description: envVar.description,
       });
     }
+  }
+
+  // Production: FRONTEND_URL must not be localhost (breaks export links, emails, OAuth)
+  const isProduction = process.env.NODE_ENV === "production";
+  const frontendUrl = (process.env.FRONTEND_URL || "").trim().toLowerCase();
+  const isLocalhost =
+    !frontendUrl ||
+    frontendUrl.includes("localhost") ||
+    frontendUrl.startsWith("127.0.0.1");
+
+  if (isProduction && isLocalhost) {
+    missing.push({
+      name: "FRONTEND_URL",
+      description:
+        "In production, FRONTEND_URL must be your real frontend URL (e.g. https://app.example.com). localhost breaks export links, emails, and OAuth.",
+    });
   }
 
   return {
@@ -130,7 +163,7 @@ export function generateEnvExample() {
     "DB_HOST=127.0.0.1",
     "DB_USER=root",
     "DB_PASS=your_password",
-    "DB_NAME=invparser",
+    "DB_NAME=invParserDb",
     "DB_PORT=3306",
     "",
     "# JWT Secrets (generate random strings)",
