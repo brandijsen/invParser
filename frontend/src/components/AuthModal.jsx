@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser, registerUser } from "../store/authSlice";
+import { validatePassword } from "../utils/passwordValidator";
 
 const AuthModal = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [validationError, setValidationError] = useState("");
 
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.auth);
@@ -22,6 +24,12 @@ const AuthModal = ({ isOpen, onClose }) => {
 
   const doRegister = (e) => {
     e.preventDefault();
+    setValidationError("");
+    const pwCheck = validatePassword(form.password);
+    if (!pwCheck.valid) {
+      setValidationError(pwCheck.message);
+      return;
+    }
     dispatch(registerUser(form))
       .unwrap()
       .then(() => onClose());
@@ -45,7 +53,9 @@ const AuthModal = ({ isOpen, onClose }) => {
         </h2>
 
         {/* ERROR MESSAGE */}
-        {error && <p className="text-red-600 text-center mb-4">{error}</p>}
+        {(validationError || error) && (
+          <p className="text-red-600 text-center mb-4">{validationError || error}</p>
+        )}
 
         {/* LOGIN FORM */}
         {mode === "login" ? (
@@ -91,7 +101,7 @@ const AuthModal = ({ isOpen, onClose }) => {
               <button
                 className="text-blue-700 font-medium"
                 type="button"
-                onClick={() => setMode("register")}
+                onClick={() => { setMode("register"); setValidationError(""); }}
               >
                 Create an account
               </button>
@@ -119,7 +129,7 @@ const AuthModal = ({ isOpen, onClose }) => {
 
             <input
               name="password"
-              placeholder="Password"
+              placeholder="Password (min 8 chars, 1 upper, 1 lower, 1 number)"
               type="password"
               value={form.password}
               onChange={change}
@@ -135,7 +145,7 @@ const AuthModal = ({ isOpen, onClose }) => {
               <button
                 className="text-blue-700 font-medium"
                 type="button"
-                onClick={() => setMode("login")}
+                onClick={() => { setMode("login"); setValidationError(""); }}
               >
                 Sign in here
               </button>

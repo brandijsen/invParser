@@ -15,6 +15,7 @@ import { getUploadDir, getFilePath } from "../config/upload.js";
 import { OAuth2Client } from "google-auth-library";
 import { logAuth, logError } from "../utils/logger.js";
 import { getRequestLogger } from "../middlewares/logger.middleware.js";
+import { validatePassword } from "../utils/passwordValidator.js";
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -71,8 +72,6 @@ const setRefreshCookie = (res, token) => {
 // ───────────────────────────────────────────────
 // REGISTER (NO refresh token)
 // ───────────────────────────────────────────────
-const MIN_PASSWORD_LENGTH = 6;
-
 export const register = async (req, res) => {
   const log = getRequestLogger(req);
   
@@ -85,10 +84,9 @@ export const register = async (req, res) => {
     if (!email?.trim()) {
       return res.status(400).json({ message: "Email is required" });
     }
-    if (!password || password.length < MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({
-        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-      });
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ message: pwCheck.message });
     }
 
     const trimmedEmail = email.trim().toLowerCase();
@@ -719,10 +717,9 @@ export const resetPassword = async (req, res) => {
     const { token } = req.params;
     const { password } = req.body;
 
-    if (!password || password.length < MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({
-        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-      });
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return res.status(400).json({ message: pwCheck.message });
     }
 
     const [rows] = await pool.execute(

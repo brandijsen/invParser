@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useDispatch } from "react-redux";
 import { resetPasswordSuccess } from "../store/authSlice";
+import { validatePassword } from "../utils/passwordValidator";
 
 const ResetPassword = () => {
   const [params] = useSearchParams();
@@ -22,8 +23,9 @@ const ResetPassword = () => {
     if (password !== confirm) {
       return setError("Passwords do not match.");
     }
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters.");
+    const pwCheck = validatePassword(password);
+    if (!pwCheck.valid) {
+      return setError(pwCheck.message);
     }
 
     try {
@@ -59,7 +61,7 @@ const ResetPassword = () => {
           <input
             type="password"
             className="border p-3 rounded w-full"
-            placeholder="New password"
+            placeholder="New password (min 8 chars, 1 upper, 1 lower, 1 number)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />

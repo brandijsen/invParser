@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
+import { validatePassword } from "../utils/passwordValidator";
 import { setUser, logout } from "../store/authSlice";
 import UserAvatar from "../components/UserAvatar";
 import { FiUser, FiLock, FiCamera, FiDownload, FiTrash2 } from "react-icons/fi";
@@ -124,6 +125,11 @@ const Profile = () => {
     setPasswordSuccess(false);
     if (newPassword !== confirmPassword) {
       setPasswordError("Passwords do not match");
+      return;
+    }
+    const pwCheck = validatePassword(newPassword);
+    if (!pwCheck.valid) {
+      setPasswordError(pwCheck.message);
       return;
     }
     setPasswordLoading(true);
@@ -252,7 +258,7 @@ const Profile = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">New password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">New password (min 8 chars, 1 upper, 1 lower, 1 number)</label>
               <input
                 type="password"
                 value={newPassword}

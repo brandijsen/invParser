@@ -45,9 +45,10 @@ The frontend stores `accessToken` and sends it with each request. Refresh tokens
 **Register**
 ```json
 POST /api/auth/register
-{ "name": "John Doe", "email": "john@example.com", "password": "secret123" }
+{ "name": "John Doe", "email": "john@example.com", "password": "Secret123" }
 → { "accessToken": "...", "user": { "id", "name", "email", "verified" } }
 ```
+Password rules: min 8 chars, at least 1 uppercase, 1 lowercase, 1 number.
 
 **Login**
 ```json
@@ -66,9 +67,10 @@ PATCH /api/auth/profile
 **Change password**
 ```json
 POST /api/auth/change-password
-{ "currentPassword": "old", "newPassword": "new123" }
+{ "currentPassword": "old", "newPassword": "NewPass123" }
 → { "message": "Password updated successfully" }
 ```
+`newPassword` must follow same rules as register (min 8 chars, 1 upper, 1 lower, 1 number).
 
 ---
 
