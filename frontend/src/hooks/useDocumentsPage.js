@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 
@@ -20,6 +20,8 @@ export function useDocumentsPage(showToast) {
 
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const initialFetchDoneRef = useRef(false);
   const [retryingId, setRetryingId] = useState(null);
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkProcessing, setBulkProcessing] = useState(false);
@@ -46,6 +48,12 @@ export function useDocumentsPage(showToast) {
   }));
 
   const fetchDocuments = useCallback(async (page, currentFilters) => {
+    const isFirstLoad = !initialFetchDoneRef.current;
+    if (isFirstLoad) {
+      setLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
     try {
       const params = new URLSearchParams({
         page: String(page),
@@ -72,7 +80,12 @@ export function useDocumentsPage(showToast) {
     } catch (err) {
       console.error("Failed to fetch documents", err);
     } finally {
-      setLoading(false);
+      if (isFirstLoad) {
+        setLoading(false);
+        initialFetchDoneRef.current = true;
+      } else {
+        setIsRefreshing(false);
+      }
     }
   }, []);
 
@@ -291,6 +304,7 @@ export function useDocumentsPage(showToast) {
   return {
     documents,
     loading,
+    isRefreshing,
     filters,
     pagination,
     selectedIds,

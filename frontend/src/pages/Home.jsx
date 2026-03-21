@@ -20,16 +20,20 @@ const Home = () => {
   // If user is logged in, show personalized version
   if (user) {
     return (
-      <>
+      <div className="min-h-screen w-full bg-[#F5F7FA]">
         {/* HERO LOGGED IN */}
-        <section className="pt-24 sm:pt-32 lg:pt-40 pb-16 sm:pb-24 lg:pb-28 bg-white w-full">
+        <section className="pt-24 sm:pt-32 lg:pt-40 pb-16 sm:pb-24 lg:pb-28 w-full">
           <div className="w-full px-4 sm:px-6 lg:px-10 text-center">
             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 max-w-4xl mx-auto">
               Welcome back, {user.name}! 👋
             </h1>
 
-            <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-700 max-w-3xl mx-auto px-1">
-              Ready to manage your invoices?
+            <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-700 max-w-2xl mx-auto px-1 leading-relaxed">
+              You&apos;re signed in to{" "}
+              <span className="font-semibold text-slate-800">InvParser</span>
+              —the app that reads your invoice PDFs and turns them into structured
+              data you can search, tag, and export. Jump back into your workspace
+              below.
             </p>
 
             <div className="mt-6 sm:mt-10 flex justify-center">
@@ -99,7 +103,7 @@ const Home = () => {
         </section>
 
         {/* BENEFITS SECTION */}
-        <section className="py-12 sm:py-16 lg:py-24 bg-[#F5F7FA] w-full">
+        <section className="py-12 sm:py-16 lg:py-24 w-full">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-slate-900 text-center mb-8 sm:mb-12">
               Why use InvParser?
@@ -122,7 +126,7 @@ const Home = () => {
             </div>
           </div>
         </section>
-      </>
+      </div>
     );
   }
 
@@ -131,16 +135,21 @@ const Home = () => {
     <>
       <AuthModal isOpen={openAuth} onClose={() => setOpenAuth(false)} />
 
-      {/* HERO — FULL WIDTH, NO GRAY GAP UNDER NAVBAR */}
-      <section className="pt-24 sm:pt-32 lg:pt-40 pb-16 sm:pb-24 lg:pb-28 bg-white w-full">
+      <div className="min-h-screen w-full bg-[#F5F7FA]">
+      {/* HERO — stesso sfondo delle altre pagine (#F5F7FA) */}
+      <section className="pt-24 sm:pt-32 lg:pt-40 pb-16 sm:pb-24 lg:pb-28 w-full">
         <div className="w-full px-4 sm:px-6 lg:px-10 text-center">
           <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 max-w-4xl mx-auto">
-            Invoice PDFs → Structured data. Automatically.
+            Invoice PDFs → structured data, automatically
           </h1>
 
-          <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-700 max-w-3xl mx-auto px-1">
-            Upload invoice PDFs. Extract dates, amounts, VAT numbers
-            and references in seconds. Ready for CSV exports and integrations.
+          <p className="mt-4 sm:mt-6 text-base sm:text-lg text-slate-700 max-w-2xl mx-auto px-1 leading-relaxed">
+            <span className="font-semibold text-slate-800">InvParser</span> is a web
+            app for anyone drowning in PDF invoices: upload files from your
+            dashboard, and we extract dates, amounts, VAT numbers, supplier details,
+            and references so you don&apos;t have to retype them. Review everything
+            in one place, then export to CSV or JSON for accounting, reporting, or
+            your own tools.
           </p>
 
           <div className="mt-6 sm:mt-10 flex justify-center">
@@ -184,8 +193,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* SECTION 2 — NO SIDE GAPS */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-[#F5F7FA] w-full">
+      <section className="py-12 sm:py-16 lg:py-24 w-full">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-10 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-10">
           {[
             "Save hours of manual data entry",
@@ -203,6 +211,7 @@ const Home = () => {
           ))}
         </div>
       </section>
+      </div>
     </>
   );
 };

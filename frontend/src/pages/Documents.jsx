@@ -1,10 +1,10 @@
-import { FiDownload } from "react-icons/fi";
+import { FiDownload, FiFileText } from "react-icons/fi";
 import DocumentUpload from "../components/DocumentUpload";
 import DocumentFilters from "../components/DocumentFilters";
-import PageLoader from "../components/PageLoader";
 import DocumentsBulkBar from "../components/documents/DocumentsBulkBar";
 import DocumentsTable from "../components/documents/DocumentsTable";
 import DocumentsPagination from "../components/documents/DocumentsPagination";
+import DocumentsListSkeleton from "../components/documents/DocumentsListSkeleton";
 import { useToast } from "../context/ToastContext";
 import { useDocumentsPage } from "../hooks/useDocumentsPage";
 
@@ -56,11 +56,30 @@ const Documents = () => {
         />
 
         {p.loading ? (
-          <PageLoader message="Loading invoices…" />
+          <DocumentsListSkeleton />
         ) : p.documents.length === 0 ? (
-          <div className="bg-white rounded-lg p-8 text-slate-600">No invoices uploaded yet.</div>
+          <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-10 sm:p-14 text-center max-w-xl mx-auto">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 mb-5">
+              <FiFileText className="w-7 h-7" strokeWidth={1.5} />
+            </div>
+            <h2 className="text-lg font-semibold text-slate-900">No invoices yet</h2>
+            <p className="text-slate-600 text-sm mt-2 leading-relaxed">
+              Upload PDF invoices above. We&apos;ll parse them and list them here with status and
+              supplier details.
+            </p>
+          </div>
         ) : (
           <>
+            {p.isRefreshing && (
+              <div
+                className="h-1 rounded-full bg-slate-200/80 overflow-hidden mb-2"
+                role="status"
+                aria-live="polite"
+                aria-label="Refreshing invoice list"
+              >
+                <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-400 documents-refresh-bar" />
+              </div>
+            )}
             {p.hasSelection && (
               <DocumentsBulkBar
                 selectedIds={p.selectedIds}

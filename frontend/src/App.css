@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
-/* FONT GLOBALI */
-:root {
+/* Plus Jakarta come stack sans (allineato a index.html + logo navbar) */
+@theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -41,4 +41,17 @@ a,
 }
 .upload-progress-inner {
   width: var(--upload-progress, 0%);
+}
+
+@keyframes documents-refresh-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.documents-refresh-bar {
+  animation: documents-refresh-shimmer 1.35s ease-in-out infinite;
 }

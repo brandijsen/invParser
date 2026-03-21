@@ -1,13 +1,13 @@
 -- =============================================================================
 -- InvParser - Database Schema (unified migration)
 -- =============================================================================
--- Uso:
+-- Usage:
 --   Fresh install:  mysql -u root -p invParserDb < migrations/db.sql
---   DB esistente:  mysql -u root -p invParserDb < migrations/db.sql
---   (le migrazioni sono idempotenti, sicure da rieseguire)
+--   Existing DB:    mysql -u root -p invParserDb < migrations/db.sql
+--   (migrations are idempotent; safe to re-run)
 -- =============================================================================
 
--- Crea DB se non esiste
+-- Create database if it does not exist
 CREATE DATABASE IF NOT EXISTS invParserDb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE invParserDb;
 
@@ -187,7 +187,7 @@ CREATE TABLE IF NOT EXISTS document_tags (
 
 
 -- =============================================================================
--- MIGRATIONS: DB esistente (idempotente, sicuro anche su fresh install)
+-- MIGRATIONS: existing DB (idempotent; safe on fresh install as well)
 -- =============================================================================
 DELIMITER //
 CREATE PROCEDURE _migrate_invparser()
@@ -216,7 +216,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'reset_token_expiry') THEN
     ALTER TABLE users ADD COLUMN reset_token_expiry DATETIME DEFAULT NULL;
   END IF;
-  -- delete_token / delete_token_expiry (cancellazione account via link email)
+  -- delete_token / delete_token_expiry (account deletion via email link)
   IF NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'delete_token') THEN
     ALTER TABLE users ADD COLUMN delete_token VARCHAR(255) DEFAULT NULL;
     ALTER TABLE users ADD COLUMN delete_token_expiry DATETIME DEFAULT NULL;
@@ -230,18 +230,18 @@ CALL _migrate_invparser();
 DROP PROCEDURE IF EXISTS _migrate_invparser;
 
 -- =============================================================================
--- LEGACY: Migrazione da vendors a suppliers
+-- LEGACY: migrate from vendors to suppliers
 -- =============================================================================
--- Eseguire SOLO se avete già una tabella vendors e volete migrare a suppliers.
--- Non eseguire su installazione fresh (questa migrazione fallirà).
+-- Run ONLY if you already have a vendors table and want to migrate to suppliers.
+-- Do not run on a fresh install (this migration will fail).
 --
--- 1. Rimuovi FK da documents
+-- 1. Drop FK from documents
 --    ALTER TABLE documents DROP FOREIGN KEY fk_documents_vendor;
 --
--- 2. Crea suppliers, copia dati, elimina vendors
+-- 2. Create suppliers, copy data, drop vendors
 --    CREATE TABLE IF NOT EXISTS suppliers (...);
 --    INSERT INTO suppliers SELECT * FROM vendors;
 --    DROP TABLE vendors;
 --
--- 3. Rinomina colonna e FK
+-- 3. Rename column and FK
 --    ALTER TABLE documents CHANGE COLUMN vendor_id supplier_id INT NULL, ...;

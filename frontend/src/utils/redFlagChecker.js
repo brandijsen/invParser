@@ -1,7 +1,11 @@
+/** Below this confidence (exclusive), the document list shows the “Review” badge. */
+export const REVIEW_BADGE_CONFIDENCE_THRESHOLD = 80;
+
 /**
- * Checks if a document has red flags (fields with confidence < threshold)
+ * True if any parsed field with `{ value, confidence }` is below the threshold.
+ * Used for the Invoices table Review badge (default threshold {@link REVIEW_BADGE_CONFIDENCE_THRESHOLD}).
  */
-export function hasRedFlags(parsedJson, threshold = 95) {
+export function hasRedFlags(parsedJson, threshold = REVIEW_BADGE_CONFIDENCE_THRESHOLD) {
   if (!parsedJson) return false;
 
   const fields = extractFieldsWithConfidence(parsedJson);

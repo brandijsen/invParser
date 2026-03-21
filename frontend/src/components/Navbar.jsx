@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import { logout } from "../store/authSlice";
@@ -11,9 +11,25 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const profileMenuRef = useRef(null);
   const { user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!profileOpen) return;
+    const closeIfOutside = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", closeIfOutside);
+    document.addEventListener("touchstart", closeIfOutside, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", closeIfOutside);
+      document.removeEventListener("touchstart", closeIfOutside);
+    };
+  }, [profileOpen]);
 
   const handleLogout = async () => {
     try {
@@ -34,8 +50,19 @@ const Navbar = () => {
       <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-r from-emerald-600 to-violet-600">
         <div className="w-full max-w-none px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between text-white">
           
-          <Link to="/" className="text-white font-semibold text-base sm:text-lg tracking-tight shrink-0">
-            InvParser
+          <Link
+            to="/"
+            className="flex items-center shrink-0 text-white hover:opacity-95 transition-opacity"
+            aria-label="InvParser home"
+          >
+            <img
+              src="/logo.svg"
+              alt=""
+              width={40}
+              height={40}
+              className="h-9 w-9 sm:h-10 sm:w-10 shrink-0"
+              decoding="async"
+            />
           </Link>
 
           {/* DESKTOP LINKS */}
@@ -68,7 +95,7 @@ const Navbar = () => {
                 Sign in
               </button>
             ) : (
-              <div className="relative">
+              <div ref={profileMenuRef} className="relative">
                 <button
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="ring-2 ring-white/50 rounded-full overflow-hidden"
