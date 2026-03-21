@@ -59,7 +59,7 @@ const avatarFilter = (req, file, cb) => {
   if (allowed.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Solo JPEG, PNG e WebP sono consentiti"), false);
+    cb(new Error("Only JPEG, PNG, and WebP images are allowed"), false);
   }
 };
 

@@ -1,7 +1,6 @@
 /**
- * Estrae informazioni strutturate da testo PDF
- * Versione deterministica (REGEX)
- * Estendibile con AI in step successivo
+ * Deterministic (regex) extraction of hints from raw PDF text.
+ * Complements AI extraction in the pipeline; does not replace it.
  */
 export const parseDocument = (rawText) => {
   if (!rawText || typeof rawText !== "string") {

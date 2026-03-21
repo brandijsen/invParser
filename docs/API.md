@@ -17,6 +17,16 @@ Authorization: Bearer <accessToken>
 
 ---
 
+## Health (`/api/health`)
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|---------------|
+| GET | `/health` | No | Liveness: checks MySQL and Redis. Returns `200` with `{ ok: true, checks: { mysql, redis } }` or `503` if a dependency is down. Intended for load balancers and uptime monitors. |
+
+`validation_flags` entries from invoice processing may include a `category` field (`document_kind`, `arithmetic`, `document_context`, `data_quality`) for UI grouping.
+
+---
+
 ## Auth (`/api/auth`)
 
 | Method | Endpoint | Auth | Description |

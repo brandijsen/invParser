@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import helmet from "helmet";
 import { pool } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import documentRoutes from "./routes/document.routes.js";
@@ -8,6 +9,7 @@ import supplierRoutes from "./routes/supplier.routes.js";
 import tagRoutes from "./routes/tag.routes.js";
 import statsRoutes from "./routes/stats.routes.js";
 import emailRoutes from "./routes/email.routes.js";
+import healthRoutes from "./routes/health.routes.js";
 import "./config/redis.js";
 import { documentQueue } from "./queues/documentQueue.js";
 import "./queues/documentWorker.js";
@@ -40,6 +42,15 @@ app.set("trust proxy", 1);
 
 app.use(cookieParser());
 
+// Security headers (API + cookies: avoid breaking CORS / cross-origin fetch)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
+
 // CORS
 app.use(cors({
   origin: process.env.FRONTEND_URL,
@@ -49,6 +60,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Health (no rate limit auth noise for monitors)
+app.use("/api/health", healthRoutes);
 
 // 📊 Request Logging (first to track every request)
 app.use(requestLogger);

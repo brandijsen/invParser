@@ -1,19 +1,53 @@
 import { FiAlertTriangle, FiAlertCircle } from "react-icons/fi";
 
 /**
- * Component to display fields with low confidence (red flags)
- * + VALIDATION FLAGS (mathematical/logical errors)
- * Shows both problematic fields and those requiring manual verification
+ * Validation flags (backend) + low-confidence fields (model), grouped by category.
  */
+
+const SECTION_COPY = {
+  document_kind: {
+    title: "Document type",
+    description:
+      "This file may not match what the app expects as an invoice, or classification disagrees with the content.",
+  },
+  arithmetic: {
+    title: "Amount consistency",
+    description:
+      "Totals, VAT, withholding, or subtotals do not match the implied arithmetic (within tolerance).",
+  },
+  document_context: {
+    title: "Subtype context",
+    description:
+      "Unusual for the invoice subtype (e.g. reverse charge / exempt); may still be valid in your jurisdiction.",
+  },
+  data_quality: {
+    title: "Data completeness & scale",
+    description: "Missing currency or unusually large amounts—often worth a quick PDF check.",
+  },
+  extraction: {
+    title: "Uncertain extraction",
+    description:
+      "The model reported low confidence on one or more fields; compare with the original document.",
+  },
+};
+
+const SECTION_ORDER = [
+  "document_kind",
+  "arithmetic",
+  "document_context",
+  "data_quality",
+  "extraction",
+];
 
 const RedFlagsAlert = ({ parsed, validationFlags }) => {
   if (!parsed) return null;
 
-  // ✅ NEW: Combina confidence-based red flags + validation flags
   const confidenceRedFlags = identifyRedFlags(parsed);
   const combinedFlags = mergeFlags(confidenceRedFlags, validationFlags || []);
 
   if (combinedFlags.length === 0) return null;
+
+  const sections = groupFlagsIntoSections(combinedFlags);
 
   return (
     <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-6 shadow-sm">
@@ -27,64 +61,76 @@ const RedFlagsAlert = ({ parsed, validationFlags }) => {
             Verification Needed
           </h3>
           <p className="text-sm text-amber-800 mb-4">
-            {combinedFlags.length} issue{combinedFlags.length > 1 ? "s" : ""} detected. 
-            Please review and mark invoice as defective if needed.
+            {combinedFlags.length} issue{combinedFlags.length > 1 ? "s" : ""} detected. Review by
+            category below; mark the invoice as defective if it is incorrect.
           </p>
 
-          {/* Lista campi problematici */}
-          <div className="space-y-3">
-            {combinedFlags.map((field, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-lg border border-amber-200 p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <FiAlertCircle className={`w-4 h-4 shrink-0 ${getSeverityColor(field.severity).text}`} />
-                      <span className="text-sm font-medium text-slate-900">
-                        {field.label}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSeverityColor(field.severity).badge}`}
+          <div className="space-y-8">
+            {sections.map(({ id, flags: sectionFlags }) => {
+              const meta = SECTION_COPY[id] || {
+                title: id.replace(/_/g, " "),
+                description: "",
+              };
+              return (
+                <div key={id}>
+                  <h4 className="text-sm font-semibold text-amber-950">{meta.title}</h4>
+                  {meta.description && (
+                    <p className="text-xs text-amber-800/90 mt-0.5 mb-3">{meta.description}</p>
+                  )}
+                  <div className="space-y-3">
+                    {sectionFlags.map((field, idx) => (
+                      <div
+                        key={`${id}-${idx}`}
+                        className="bg-white rounded-lg border border-amber-200 p-4"
                       >
-                        {field.type === "validation" ? (
-                          field.severity.toUpperCase()
-                        ) : (
-                          `${field.confidence}% confident`
-                        )}
-                      </span>
-                    </div>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <FiAlertCircle
+                                className={`w-4 h-4 shrink-0 ${getSeverityColor(field.severity).text}`}
+                              />
+                              <span className="text-sm font-medium text-slate-900">
+                                {field.label}
+                              </span>
+                              <span
+                                className={`text-xs px-2 py-0.5 rounded-full font-medium ${getSeverityColor(field.severity).badge}`}
+                              >
+                                {field.type === "confidence" ? (
+                                  `${field.confidence}% confident`
+                                ) : (
+                                  field.severity.toUpperCase()
+                                )}
+                              </span>
+                            </div>
 
-                    {/* ✅ NEW: Show message for validation flags */}
-                    {field.message && (
-                      <div className="text-sm text-slate-700 mb-2">
-                        {field.message}
-                      </div>
-                    )}
+                            {field.message && (
+                              <div className="text-sm text-slate-700 mb-2">{field.message}</div>
+                            )}
 
-                    {/* ✅ NEW: Mostra expected vs actual se disponibile */}
-                    {field.expected && field.actual && (
-                      <div className="text-xs text-slate-600 mb-2 space-y-1">
-                        <div>
-                          <span className="font-medium">Expected:</span> €{field.expected}
+                            {field.expected && field.actual && (
+                              <div className="text-xs text-slate-600 mb-2 space-y-1">
+                                <div>
+                                  <span className="font-medium">Expected:</span> €{field.expected}
+                                </div>
+                                <div>
+                                  <span className="font-medium">Actual:</span> €{field.actual}
+                                </div>
+                              </div>
+                            )}
+
+                            {field.value !== undefined && field.type === "confidence" && (
+                              <div className="text-sm text-slate-700 font-mono bg-slate-50 px-3 py-2 rounded border border-slate-200">
+                                {formatValue(field.value)}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div>
-                          <span className="font-medium">Actual:</span> €{field.actual}
-                        </div>
                       </div>
-                    )}
-
-                    {/* Extracted value (for confidence flags only) */}
-                    {field.value !== undefined && (
-                      <div className="text-sm text-slate-700 font-mono bg-slate-50 px-3 py-2 rounded border border-slate-200">
-                        {formatValue(field.value)}
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -92,18 +138,12 @@ const RedFlagsAlert = ({ parsed, validationFlags }) => {
   );
 };
 
-// ===== Helper Functions =====
-
-/**
- * Extracts fields with confidence score from a nested object
- */
 function extractFieldsWithConfidence(obj, path = "") {
   const fields = [];
 
   function traverse(current, currentPath) {
     if (!current || typeof current !== "object") return;
 
-    // If it has value and confidence, it's a field
     if ("value" in current && "confidence" in current) {
       fields.push({
         path: currentPath,
@@ -113,8 +153,8 @@ function extractFieldsWithConfidence(obj, path = "") {
       return;
     }
 
-    // Altrimenti continua a traversare
     for (const [key, value] of Object.entries(current)) {
+      if (key === "validation_flags" || key === "validation") continue;
       const newPath = currentPath ? `${currentPath}.${key}` : key;
       traverse(value, newPath);
     }
@@ -124,54 +164,78 @@ function extractFieldsWithConfidence(obj, path = "") {
   return fields;
 }
 
-/**
- * Identifica i red flags (confidence < 70%)
- */
 function identifyRedFlags(parsedJson, threshold = 70) {
   if (!parsedJson) return [];
 
   const allFields = extractFieldsWithConfidence(parsedJson);
 
-  const redFlags = allFields.filter((field) => field.confidence < threshold);
-
-  return redFlags.map((field) => ({
-    ...field,
-    severity: getSeverity(field.confidence),
-    label: formatFieldLabel(field.path),
-    type: "confidence", // ✅ NEW: tipo flag
-  }));
+  return allFields
+    .filter((field) => field.confidence < threshold)
+    .map((field) => ({
+      ...field,
+      severity: getSeverity(field.confidence),
+      label: formatFieldLabel(field.path),
+      type: "confidence",
+      category: "extraction",
+    }));
 }
 
-/**
- * ✅ NEW: Merge confidence-based flags with validation flags
- */
-function mergeFlags(confidenceFlags, validationFlags) {
-  const merged = [...confidenceFlags];
+function inferValidationCategory(flag) {
+  if (flag.category) return flag.category;
+  const t = flag.type;
+  if (t === "wrong_document_type") return "document_kind";
+  if (t === "calculation_error") return "arithmetic";
+  if (t === "missing_value") return "data_quality";
+  if (t === "logic_error") return "arithmetic";
+  if (t === "unusual_value") {
+    const f = flag.field || "";
+    if (f === "net_payable" || f === "vat.amount") return "document_context";
+    return "data_quality";
+  }
+  if (t === "low_text_content" || t === "extraction_failed") return "data_quality";
+  return "arithmetic";
+}
 
-  // Add validation flags with uniform format
+function mergeFlags(confidenceFlags, validationFlags) {
+  const merged = confidenceFlags.map((f) => ({
+    ...f,
+    category: f.category || "extraction",
+  }));
+
   validationFlags.forEach((vFlag) => {
     merged.push({
       path: vFlag.field,
       label: vFlag.field ? formatFieldLabel(vFlag.field) : "Unknown Field",
       severity: vFlag.severity || "medium",
-      confidence: null, // N/A for validation flags
+      confidence: null,
       message: vFlag.message,
-      type: "validation", // ✅ tipo validation
+      type: "validation",
+      category: inferValidationCategory(vFlag),
       expected: vFlag.expected,
       actual: vFlag.actual,
     });
   });
 
-  // Sort by severity (critical > high > medium > low)
-  const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-  merged.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-
   return merged;
 }
 
-/**
- * Determina la severity in base al confidence score
- */
+function groupFlagsIntoSections(flags) {
+  const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+  const byCat = {};
+  for (const f of flags) {
+    const c = f.category || "arithmetic";
+    if (!byCat[c]) byCat[c] = [];
+    byCat[c].push(f);
+  }
+  for (const c of Object.keys(byCat)) {
+    byCat[c].sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  }
+  return SECTION_ORDER.filter((id) => byCat[id]?.length).map((id) => ({
+    id,
+    flags: byCat[id],
+  }));
+}
+
 function getSeverity(confidence) {
   if (confidence < 50) return "critical";
   if (confidence < 60) return "high";
@@ -179,9 +243,6 @@ function getSeverity(confidence) {
   return "low";
 }
 
-/**
- * Colors for severity
- */
 function getSeverityColor(severity) {
   const colors = {
     critical: {
@@ -205,9 +266,6 @@ function getSeverityColor(severity) {
   return colors[severity] || colors.low;
 }
 
-/**
- * Formats the field path into a readable label
- */
 function formatFieldLabel(path) {
   return path
     .split(".")
@@ -219,9 +277,6 @@ function formatFieldLabel(path) {
     .join(" > ");
 }
 
-/**
- * Formats the value for display
- */
 function formatValue(value) {
   if (value === null || value === undefined) return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";

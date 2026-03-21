@@ -119,10 +119,11 @@ export const errorHandler = (err, req, res, next) => {
     requestId: req.requestId, // For client-side debugging
   };
 
-  // In development only, add extra details
+  // Development: safe diagnostics only (never send raw Error objects to clients)
   if (process.env.NODE_ENV !== "production") {
     response.stack = err.stack;
-    response.error = err;
+    response.errorName = err.name;
+    if (err.code) response.errorCode = err.code;
   }
 
   res.status(statusCode).json(response);

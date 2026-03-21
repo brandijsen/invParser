@@ -1,13 +1,15 @@
+import fs from "fs";
 import { DocumentService } from "../services/document.service.js";
 import { DocumentModel } from "../models/document.model.js";
 import { documentQueue } from "../queues/documentQueue.js";
 import { createBatch, registerDocumentInBatch } from "../services/batchNotification.service.js";
 import { getRequestLogger } from "../middlewares/logger.middleware.js";
 import { logError } from "../utils/logger.js";
+import { filePathLooksLikePdf } from "../utils/pdfMagic.js";
 
 /*
 |--------------------------------------------------------------------------
-| UPLOAD DOCUMENT (supports single and multiple files)
+| Upload document(s) — single or multiple PDF files
 |--------------------------------------------------------------------------
 */
 export const uploadDocument = async (req, res) => {
@@ -31,6 +33,29 @@ export const uploadDocument = async (req, res) => {
       batchId,
       fileNames: files.map((f) => f.originalname),
     });
+
+    const cleanupUploadedFiles = () => {
+      for (const f of files) {
+        try {
+          if (f.path && fs.existsSync(f.path)) fs.unlinkSync(f.path);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+
+    for (const file of files) {
+      if (!file.path || !filePathLooksLikePdf(file.path)) {
+        log.warn("Upload rejected: file does not have a PDF signature", {
+          originalname: file.originalname,
+        });
+        cleanupUploadedFiles();
+        return res.status(400).json({
+          message: "One or more files are not valid PDFs.",
+          detail: file.originalname,
+        });
+      }
+    }
 
     for (const file of files) {
       const document = await DocumentService.upload({

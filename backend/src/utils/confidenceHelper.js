@@ -1,6 +1,6 @@
 /**
- * Analizza i dati parsed e identifica i campi con confidence score < 70% (red flags)
- * Returns an array of problematic fields for UI display
+ * Scans parsed data and finds fields with confidence score below the threshold (red flags).
+ * Returns an array of problematic fields for the UI.
  */
 
 const CONFIDENCE_THRESHOLD = 70;
@@ -24,7 +24,7 @@ function extractFieldsWithConfidence(obj, path = "") {
       return;
     }
 
-    // Altrimenti continua a traversare
+    // Otherwise keep traversing
     for (const [key, value] of Object.entries(current)) {
       const newPath = currentPath ? `${currentPath}.${key}` : key;
       traverse(value, newPath);
@@ -36,7 +36,7 @@ function extractFieldsWithConfidence(obj, path = "") {
 }
 
 /**
- * Identifica i red flags (confidence < threshold)
+ * Returns red-flag fields (confidence < threshold).
  */
 export function identifyRedFlags(parsedJson, threshold = CONFIDENCE_THRESHOLD) {
   if (!parsedJson) return [];
@@ -58,21 +58,20 @@ export function identifyRedFlags(parsedJson, threshold = CONFIDENCE_THRESHOLD) {
  * Determines severity based on confidence score
  */
 function getSeverity(confidence) {
-  if (confidence < 50) return "critical"; // 🔴 Molto problematico
-  if (confidence < 60) return "high";     // 🟠 Problematico
-  if (confidence < 70) return "medium";   // 🟡 Da verificare
-  return "low";                            // 🟢 OK
+  if (confidence < 50) return "critical";
+  if (confidence < 60) return "high";
+  if (confidence < 70) return "medium";
+  return "low";
 }
 
 /**
- * Formatta il path del campo in una label leggibile
- * es: "amounts.vat.rate" → "VAT Rate"
+ * Turns a field path into a readable label (e.g. amounts.vat.rate → Amounts > Vat > Rate).
  */
 function formatFieldLabel(path) {
   return path
     .split(".")
     .map((part) => {
-      // Rimuovi underscore e converti in Title Case
+      // Underscores to spaces, title case
       return part
         .replace(/_/g, " ")
         .replace(/\b\w/g, (char) => char.toUpperCase());
@@ -111,7 +110,7 @@ export function updateFieldValue(parsedJson, fieldPath, newValue) {
 
   let current = result;
   
-  // Naviga fino al campo target
+  // Walk to the target field
   for (let i = 0; i < pathParts.length - 1; i++) {
     if (!current[pathParts[i]]) {
       current[pathParts[i]] = {};
@@ -127,7 +126,7 @@ export function updateFieldValue(parsedJson, fieldPath, newValue) {
     // Set confidence to 100 for manually edited fields
     current[lastKey].confidence = 100;
   } else {
-    // Altrimenti sostituisci direttamente
+    // Otherwise replace with a scored field
     current[lastKey] = { value: newValue, confidence: 100 };
   }
 

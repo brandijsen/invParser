@@ -6,11 +6,17 @@ import { DocumentResultModel } from "../models/documentResult.model.js";
 import { parseDocument } from "../services/documentParser.service.js";
 import { extractSemanticData } from "../services/aiSemanticParser.service.js";
 import { classifyDocument } from "../services/documentClassifier.service.js";
-import { validateExtractedData } from "../services/validationRules.service.js";
+import {
+  validateExtractedData,
+  ALERT_CATEGORY,
+} from "../services/validationRules.service.js";
 import { markDocumentComplete } from "../services/batchNotification.service.js";
 import { upsertSupplierFromDocument } from "../services/supplier.service.js";
 import { syncDueDateForDocument } from "../services/dueDateTags.service.js";
 import logger, { logJob, logError, logValidation } from "../utils/logger.js";
+
+/** Below this length (trimmed), PDF text is unlikely to support reliable parsing (e.g. scanned PDFs without OCR). */
+const LOW_EXTRACTED_TEXT_THRESHOLD = 80;
 
 export async function processDocumentJob(job) {
   const { documentId } = job.data;
@@ -68,6 +74,29 @@ export async function processDocumentJob(job) {
 
       validationResult = validateExtractedData(semantic, document_subtype);
 
+      const trimmedText = rawText.trim();
+      if (trimmedText.length < LOW_EXTRACTED_TEXT_THRESHOLD) {
+        validationResult.flags.push({
+          field: "document_text",
+          severity: "medium",
+          message: `Very little text was extracted from the PDF (${trimmedText.length} characters). Scanned-only PDFs without a text layer often parse poorly—try exporting or uploading a text-based PDF if available.`,
+          type: "low_text_content",
+          category: ALERT_CATEGORY.DATA_QUALITY,
+        });
+      }
+
+      if (semantic?.extraction_failed) {
+        validationResult.flags.push({
+          field: "extraction",
+          severity: "high",
+          message:
+            semantic.extraction_error_user_message ||
+            "AI extraction failed; only minimal data was saved. Check OpenAI configuration and retry processing.",
+          type: "extraction_failed",
+          category: ALERT_CATEGORY.DATA_QUALITY,
+        });
+      }
+
       if (validationResult.flags.length > 0) {
         logValidation(documentId, validationResult.flags, {
           document_subtype,
@@ -86,6 +115,7 @@ export async function processDocumentJob(job) {
         severity: "critical",
         message: `This document is not an invoice. Detected type: "${document_type}". Please upload only invoices.`,
         type: "wrong_document_type",
+        category: ALERT_CATEGORY.DOCUMENT_KIND,
         detected_type: document_type,
       });
     }

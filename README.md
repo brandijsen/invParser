@@ -24,6 +24,12 @@ Parse, manage and export invoice data from PDF documents. Upload invoices, extra
 | Queue     | BullMQ + Redis                |
 | AI        | OpenAI API                    |
 | Auth      | JWT, Google OAuth, nodemailer |
+| Security  | Helmet (HTTP headers on API) |
+
+## Documentation
+
+- **`docs/API.md`** — REST API reference (auth, documents, health, …)  
+- **`docs/presentazione-invparser.md`** — Slide-by-slide outline for Google Slides / PowerPoint (Italian)
 
 ## Prerequisites
 
@@ -103,6 +109,18 @@ cd frontend && npm run dev
 | `cd backend && npm run dev`   | Backend with nodemon   |
 | `cd frontend && npm run dev`  | Frontend with Vite     |
 | `cd frontend && npm run build`| Production build       |
+| `cd backend && npm test`      | Backend unit tests (Vitest) |
+| `cd frontend && npm test`     | Frontend unit tests (Vitest) |
+
+## Known limitations
+
+- **PDF text only** — Extraction uses `pdf-parse` (text embedded in the PDF). Scanned image-only PDFs without a text layer yield little or no text; parsing and AI quality suffer. The pipeline adds a **low-text warning** when extracted text is very short.
+- **OpenAI dependency** — Classification and structured extraction require a working `OPENAI_API_KEY` and quota. On failure, the app stores **minimal data** and flags **extraction failed** so you can retry after fixing configuration.
+- **Uploaded files** — PDFs are validated with a **magic-byte** check (`%PDF`) to reduce renamed non-PDF uploads. This is not antivirus scanning; treat uploads like any untrusted file in hardened deployments.
+
+## Operations & monitoring
+
+- **Health check** — `GET /api/health` returns JSON with `mysql` and `redis` status (`up` / `down`). HTTP **503** if a required dependency fails. Use for load balancers or uptime monitors (no authentication).
 
 ## Production / Deployment
 
@@ -161,6 +179,7 @@ invParser/
 │   │   └── routes/
 │   ├── migrations/
 │   └── scripts/       # backup, backfill, etc.
+├── docs/              # API reference, presentation outline
 ├── docker-compose.yml # MySQL + Redis
 └── nixpacks.toml      # Railway build
 ```

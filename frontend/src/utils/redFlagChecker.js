@@ -13,6 +13,17 @@ export function hasRedFlags(parsedJson, threshold = REVIEW_BADGE_CONFIDENCE_THRE
 }
 
 /**
+ * Use for the Invoices table “Review” badge. Aligns with detail “Verification Needed”:
+ * any `validation_flags` entries from the parser, or low field confidence ({@link hasRedFlags}).
+ */
+export function documentNeedsReview(parsedJson, threshold = REVIEW_BADGE_CONFIDENCE_THRESHOLD) {
+  if (!parsedJson) return false;
+  const vf = parsedJson.validation_flags;
+  if (Array.isArray(vf) && vf.length > 0) return true;
+  return hasRedFlags(parsedJson, threshold);
+}
+
+/**
  * Extracts all fields with confidence from a nested object
  */
 function extractFieldsWithConfidence(obj, path = "") {

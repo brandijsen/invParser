@@ -251,19 +251,23 @@ CRITICAL:
     return JSON.parse(content);
   } catch (error) {
     const duration = Date.now() - startTime;
-    
+
     logError(error, {
       operation: "extractSemanticData",
       service: "openai",
       document_subtype,
-      duration: `${duration}ms`
+      duration: `${duration}ms`,
     });
-    
-    // Fallback: minimal structure
+
+    // Minimal fallback + explicit flags so the UI and validation can surface the failure
     return {
       amounts: {
-        currency: "EUR"
-      }
+        currency: { value: "EUR", confidence: 0 },
+      },
+      extraction_failed: true,
+      extraction_error_code: error?.name === "SyntaxError" ? "invalid_json" : "openai_error",
+      extraction_error_user_message:
+        "Automatic extraction did not complete. Check your OpenAI API key, billing, and network, then retry processing from the documents list.",
     };
   }
 }

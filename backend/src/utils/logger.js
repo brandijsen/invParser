@@ -22,7 +22,7 @@ const consoleFormat = winston.format.combine(
   winston.format.printf(({ timestamp, level, message, ...metadata }) => {
     let msg = `${timestamp} [${level}]: ${message}`;
     
-    // Aggiungi metadati rilevanti
+    // Append relevant metadata
     if (Object.keys(metadata).length > 0) {
       // Exclude stack trace from console for brevity (already in files)
       const { stack, ...rest } = metadata;
@@ -35,7 +35,7 @@ const consoleFormat = winston.format.combine(
   })
 );
 
-// Crea il logger principale
+// Main logger instance
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
   format: customFormat,
@@ -51,7 +51,7 @@ const logger = winston.createLogger({
       maxFiles: 5,
     }),
     
-    // Log solo errori su file separato
+    // Errors only to a separate file
     new winston.transports.File({
       filename: path.join(logsDir, "error.log"),
       level: "error",
@@ -59,7 +59,7 @@ const logger = winston.createLogger({
       maxFiles: 5,
     }),
     
-    // Console output (solo in development o se richiesto)
+    // Console output in development or when CONSOLE_LOGS=true
     ...(process.env.NODE_ENV !== "production" || process.env.CONSOLE_LOGS === "true"
       ? [
           new winston.transports.Console({
@@ -68,7 +68,7 @@ const logger = winston.createLogger({
         ]
       : []),
   ],
-  // Non uscire su errori di log (gestione graceful)
+  // Do not exit the process on logging errors
   exitOnError: false,
 });
 

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { FiXCircle, FiAlertTriangle } from "react-icons/fi";
-import { hasRedFlags } from "../../utils/redFlagChecker";
+import { documentNeedsReview } from "../../utils/redFlagChecker";
 import { DOCUMENT_STATUS_META } from "./documentStatusMeta.jsx";
 
 const DocumentsTable = ({
@@ -50,7 +50,7 @@ const DocumentsTable = ({
                 ? JSON.parse(doc.parsed_json)
                 : doc.parsed_json
               : null;
-            const hasFlags = parsed && hasRedFlags(parsed);
+            const hasFlags = parsed && documentNeedsReview(parsed);
 
             return (
               <tr

@@ -11,6 +11,14 @@
 
 const TOLERANCE = 0.01; // Tolerance for decimal comparison (±1 cent)
 
+/** Alert groups for UI / filtering (do not use country-specific VAT lists as “truth”) */
+export const ALERT_CATEGORY = {
+  DOCUMENT_KIND: "document_kind",
+  ARITHMETIC: "arithmetic",
+  DOCUMENT_CONTEXT: "document_context",
+  DATA_QUALITY: "data_quality",
+};
+
 /**
  * Validates extracted data and returns an object with validation flags
  * @param {Object} semantic - Dati estratti dall'AI (semantic.amounts)
@@ -91,6 +99,7 @@ function validateProfessionalFee(amounts, flags) {
       severity: "critical",
       message: `Net payable (€${netPayable.toFixed(2)}) seems too high (>200% of gross fee €${grossFee.toFixed(2)})`,
       type: "logic_error",
+      category: ALERT_CATEGORY.ARITHMETIC,
     });
   }
 
@@ -101,6 +110,7 @@ function validateProfessionalFee(amounts, flags) {
       severity: "critical",
       message: `Withholding tax (€${withholdingAmount.toFixed(2)}) cannot exceed gross fee (€${grossFee.toFixed(2)})`,
       type: "logic_error",
+      category: ALERT_CATEGORY.ARITHMETIC,
     });
   }
 
@@ -115,6 +125,7 @@ function validateProfessionalFee(amounts, flags) {
         severity: "high",
         message: `VAT calculation mismatch: expected €${expectedVat.toFixed(2)} (${vatRate}% of €${grossFee.toFixed(2)}), but got €${vatAmount.toFixed(2)}`,
         type: "calculation_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
         expected: expectedVat.toFixed(2),
         actual: vatAmount.toFixed(2),
       });
@@ -132,6 +143,7 @@ function validateProfessionalFee(amounts, flags) {
         severity: "medium",
         message: `Withholding tax calculation mismatch: expected €${expectedWithholding.toFixed(2)} (${withholdingRate}% of €${grossFee.toFixed(2)}), but got €${withholdingAmount.toFixed(2)}`,
         type: "calculation_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
         expected: expectedWithholding.toFixed(2),
         actual: withholdingAmount.toFixed(2),
       });
@@ -153,6 +165,7 @@ function validateProfessionalFee(amounts, flags) {
         severity: "high",
         message: `Net payable calculation mismatch: expected €${expectedNet.toFixed(2)}, but got €${netPayable.toFixed(2)}`,
         type: "calculation_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
         expected: expectedNet.toFixed(2),
         actual: netPayable.toFixed(2),
         formula:
@@ -169,13 +182,14 @@ function validateProfessionalFee(amounts, flags) {
     }
   }
 
-  // 🔵 INFO: Negative net payable (possibile ma raro)
-  if (netPayable < 0) {
+  // 🔵 INFO: Negative net payable (unusual but possible)
+  if (netPayable !== null && netPayable < 0) {
     flags.push({
       field: "net_payable",
       severity: "low",
       message: `Net payable is negative (€${netPayable.toFixed(2)}). This is unusual but possible if withholding exceeds gross+VAT.`,
       type: "unusual_value",
+      category: ALERT_CATEGORY.DOCUMENT_CONTEXT,
     });
   }
 }
@@ -199,6 +213,7 @@ function validateStandardInvoice(amounts, flags) {
       severity: "critical",
       message: `Total (€${total.toFixed(2)}) seems too high (>200% of subtotal €${subtotal.toFixed(2)})`,
       type: "logic_error",
+      category: ALERT_CATEGORY.ARITHMETIC,
     });
   }
 
@@ -213,6 +228,7 @@ function validateStandardInvoice(amounts, flags) {
         severity: "high",
         message: `VAT calculation mismatch: expected €${expectedVat.toFixed(2)} (${vatRate}% of €${subtotal.toFixed(2)}), but got €${vatAmount.toFixed(2)}`,
         type: "calculation_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
         expected: expectedVat.toFixed(2),
         actual: vatAmount.toFixed(2),
       });
@@ -230,6 +246,7 @@ function validateStandardInvoice(amounts, flags) {
         severity: "high",
         message: `Total calculation mismatch: expected €${expectedTotal.toFixed(2)} (subtotal + VAT), but got €${total.toFixed(2)}`,
         type: "calculation_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
         expected: expectedTotal.toFixed(2),
         actual: total.toFixed(2),
         formula: `Subtotal (€${subtotal.toFixed(2)}) + VAT (€${vatAmount.toFixed(2)})`,
@@ -259,6 +276,7 @@ function validateReverseCharge(amounts, flags) {
         severity: "medium",
         message: `Reverse charge invoice: total (€${total.toFixed(2)}) should equal subtotal (€${subtotal.toFixed(2)})`,
         type: "logic_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
       });
     }
   }
@@ -270,6 +288,7 @@ function validateReverseCharge(amounts, flags) {
       severity: "low",
       message: `VAT amount detected (€${vatAmount.toFixed(2)}) in reverse charge invoice. Verify if this is correct.`,
       type: "unusual_value",
+      category: ALERT_CATEGORY.DOCUMENT_CONTEXT,
     });
   }
 }
@@ -295,6 +314,7 @@ function validateTaxExempt(amounts, flags) {
         severity: "medium",
         message: `Tax-exempt invoice: total (€${total.toFixed(2)}) should equal subtotal (€${subtotal.toFixed(2)})`,
         type: "logic_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
       });
     }
   }
@@ -306,6 +326,7 @@ function validateTaxExempt(amounts, flags) {
       severity: "low",
       message: `VAT amount detected (€${vatAmount.toFixed(2)}) in tax-exempt invoice. Verify if this is correct.`,
       type: "unusual_value",
+      category: ALERT_CATEGORY.DOCUMENT_CONTEXT,
     });
   }
 }
@@ -328,22 +349,12 @@ function validateCommonRules(amounts, flags) {
         severity: "critical",
         message: `${formatFieldName(key)} is negative (€${numValue.toFixed(2)}). This is likely an error.`,
         type: "logic_error",
+        category: ALERT_CATEGORY.ARITHMETIC,
       });
     }
   }
 
-  // 🟡 MEDIUM: VAT rate non standard (e.g. 25%, 15%)
-  const vatRate = getNumericValue(amounts.vat?.rate);
-  const standardRates = [0, 4, 5, 10, 22]; // Common VAT rates (IT/EU)
-
-  if (vatRate !== null && !standardRates.includes(vatRate)) {
-    flags.push({
-      field: "vat.rate",
-      severity: "low",
-      message: `VAT rate ${vatRate}% is non-standard. Verify if this is correct (standard rates: 4%, 10%, 22%).`,
-      type: "unusual_value",
-    });
-  }
+  // No country-specific “standard VAT rate” checks: foreign invoices use many lawful rates (e.g. 20% FR).
 
   // 🔴 CRITICAL: Currency mismatch detection
   const currency = amounts.currency?.value || amounts.currency;
@@ -354,6 +365,7 @@ function validateCommonRules(amounts, flags) {
       severity: "medium",
       message: "Currency not detected in document. Verify manually.",
       type: "missing_value",
+      category: ALERT_CATEGORY.DATA_QUALITY,
     });
   }
 
@@ -370,6 +382,7 @@ function validateCommonRules(amounts, flags) {
         severity: "medium",
         message: `${formatFieldName(key)} is very large (€${numValue.toFixed(2)}). Verify if this is correct.`,
         type: "unusual_value",
+        category: ALERT_CATEGORY.DATA_QUALITY,
       });
     }
   }
@@ -430,6 +443,7 @@ export function convertValidationFlagsToRedFlags(validationFlags) {
     severity: flag.severity,
     message: flag.message,
     type: flag.type,
+    category: flag.category,
     expected: flag.expected,
     actual: flag.actual,
   }));
