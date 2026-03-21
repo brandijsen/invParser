@@ -53,3 +53,22 @@ export function clearAuthCookies(res) {
   res.clearCookie("refreshToken", opts);
   res.clearCookie("accessToken", opts);
 }
+
+const OAUTH_STATE_COOKIE = "oauth_state";
+
+/** Short-lived CSRF nonce for Google OAuth (10 minutes). */
+export function setOAuthStateCookie(res, state) {
+  const { sameSite, secure } = getCookieCrossOriginFlags();
+  res.cookie(OAUTH_STATE_COOKIE, state, {
+    httpOnly: true,
+    sameSite,
+    secure,
+    maxAge: 10 * 60 * 1000,
+    path: "/",
+  });
+}
+
+export function clearOAuthStateCookie(res) {
+  const { sameSite, secure } = getCookieCrossOriginFlags();
+  res.clearCookie(OAUTH_STATE_COOKIE, { httpOnly: true, sameSite, secure, path: "/" });
+}

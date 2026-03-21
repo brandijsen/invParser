@@ -12,6 +12,7 @@ import {
   getAvatar,
   sendVerificationEmail,
   verify,
+  verifyEmailFromBody,
   googleAuth,
   googleCallback,
   logout,
@@ -54,6 +55,7 @@ router.get("/confirm-delete/:token", confirmDeleteAccount);
 
 // EMAIL VERIFY
 router.post("/send-verification", protect, sendVerificationEmail);
+router.post("/verify-email", authRateLimiter, verifyEmailFromBody);
 router.get("/verify/:token", verify);
 
 // GOOGLE OAUTH

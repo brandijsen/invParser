@@ -315,8 +315,8 @@ const DocumentUpload = ({ onUploaded }) => {
               {item.status === "uploading" && (
                 <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                   <div
-                    className="bg-emerald-600 h-full transition-all duration-300"
-                    style={{ width: `${item.progress}%` }}
+                    className="bg-emerald-600 h-full transition-all duration-300 upload-progress-inner max-w-full"
+                    style={{ "--upload-progress": `${item.progress}%` }}
                   />
                 </div>
               )}

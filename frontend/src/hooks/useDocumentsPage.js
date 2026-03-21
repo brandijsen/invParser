@@ -171,9 +171,7 @@ export function useDocumentsPage(showToast) {
     setBulkProcessing(true);
     setConfirmingBulkDelete(false);
     try {
-      for (const id of selectedIds) {
-        await api.delete(`/documents/${id}`);
-      }
+      await api.delete("/documents/bulk", { data: { documentIds: selectedIds } });
       setSelectedIds([]);
       await fetchDocuments(pagination.page, filters);
       showToast("Documents deleted");

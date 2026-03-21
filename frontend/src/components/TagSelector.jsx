@@ -42,8 +42,8 @@ const TagSelector = ({ documentId, documentTags = [], onTagsChange }) => {
           documentTags.map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: tag.color || "#94a3b8" }}
+              className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium text-white bg-[var(--tag-bg,#94a3b8)]"
+              style={{ "--tag-bg": tag.color || "#94a3b8" }}
             >
               {tag.name}
             </span>

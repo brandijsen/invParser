@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.model.js";
 import { getCachedUser, setCachedUser } from "../utils/userAuthCache.js";
+import { JWT_VERIFY_OPTIONS } from "../utils/jwtConstants.js";
 
 export const protect = async (req, res, next) => {
   try {
@@ -16,7 +17,7 @@ export const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({ message: "Not authorized" });
     }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET, JWT_VERIFY_OPTIONS);
     const uid = decoded.id;
 
     let user = getCachedUser(uid);

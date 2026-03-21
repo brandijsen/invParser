@@ -45,23 +45,23 @@ const UserAvatar = ({ user, size = 36, className = "" }) => {
 
   const fallback = user?.name ? user.name[0].toUpperCase() : "?";
 
-  const dim = { width: size, height: size };
+  const sizeVar = { "--avatar-size": `${size}px` };
 
   if (src) {
     return (
       <img
         src={src}
         alt={user?.name || "Avatar"}
-        className={`rounded-full object-cover ${className}`}
-        style={dim}
+        className={`rounded-full object-cover user-avatar-sizer ${className}`}
+        style={sizeVar}
       />
     );
   }
 
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-full bg-white text-slate-900 font-bold ${className}`}
-      style={{ ...dim, fontSize: Math.max(12, size * 0.45) }}
+      className={`inline-flex items-center justify-center rounded-full bg-white text-slate-900 font-bold user-avatar-sizer user-avatar-fallback-text ${className}`}
+      style={sizeVar}
     >
       {fallback}
     </span>

@@ -30,3 +30,15 @@ a,
 [role="button"] {
   cursor: pointer;
 }
+
+/* CSS variables instead of scattered inline width/height/fontSize */
+.user-avatar-sizer {
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+}
+.user-avatar-fallback-text {
+  font-size: max(12px, calc(var(--avatar-size, 36px) * 0.45));
+}
+.upload-progress-inner {
+  width: var(--upload-progress, 0%);
+}

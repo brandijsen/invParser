@@ -9,9 +9,9 @@ export const StatsModel = {
     if (!Number.isFinite(uid)) {
       throw new Error("Invalid user id");
     }
-    // Total documents per status
-    const [statusStats] = await pool.execute(
-      `
+    const [[statusRows], [defectiveRows], [amountsRows]] = await Promise.all([
+      pool.execute(
+        `
       SELECT 
         COUNT(*) as total,
         SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as done,
@@ -21,22 +21,18 @@ export const StatsModel = {
       FROM documents
       WHERE user_id = ?
       `,
-      [uid]
-    );
-
-    // Count defective documents
-    const [defectiveStats] = await pool.execute(
-      `
+        [uid]
+      ),
+      pool.execute(
+        `
       SELECT COUNT(*) as count
       FROM documents
       WHERE user_id = ? AND is_defective = 1
       `,
-      [uid]
-    );
-
-    // Calculate total amounts (aggregating from document_results)
-    const [amountsStats] = await pool.execute(
-      `
+        [uid]
+      ),
+      pool.execute(
+        `
       SELECT 
         JSON_UNQUOTE(JSON_EXTRACT(dr.parsed_json, '$.semantic.amounts.currency.value')) as currency_val,
         JSON_UNQUOTE(JSON_EXTRACT(dr.parsed_json, '$.semantic.amounts.currency')) as currency_simple,
@@ -48,12 +44,13 @@ export const StatsModel = {
       JOIN document_results dr ON d.id = dr.document_id
       WHERE d.user_id = ? AND d.status = 'done'
       `,
-      [uid]
-    );
+        [uid]
+      ),
+    ]);
 
     // Aggregate amounts by currency
     const amountsByCurrency = {};
-    amountsStats.forEach((row) => {
+    amountsRows.forEach((row) => {
       // Support both old and new format
       const currency = row.currency_val || row.currency_simple;
       const amount = row.total_amount_val || row.total_amount_simple || row.net_payable_val || row.net_payable_simple;
@@ -66,7 +63,7 @@ export const StatsModel = {
       }
     });
 
-    const doc = statusStats[0];
+    const doc = statusRows[0];
     return {
       documents: {
         total: Number(doc?.total ?? 0),
@@ -76,7 +73,7 @@ export const StatsModel = {
         failed: Number(doc?.failed ?? 0),
       },
       amounts: amountsByCurrency,
-      defective: Number(defectiveStats[0]?.count ?? 0),
+      defective: Number(defectiveRows[0]?.count ?? 0),
     };
   },
 

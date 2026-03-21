@@ -15,6 +15,7 @@ import {
   getUserDocuments,
   getDocumentById,
   deleteDocument,
+  bulkDeleteDocuments,
   getDocumentResult,
   getDocumentRaw,
   downloadDocument,
@@ -39,6 +40,8 @@ router.get("/export/excel", protect, exportDocumentsExcel);
 router.get("/defective/list", protect, getDefectiveDocuments);
 router.post("/bulk-unmark-defective", protect, bulkUnmarkDefective);
 router.post("/bulk-retry", protect, bulkRetryDocuments);
+
+router.delete("/bulk", protect, bulkDeleteDocuments);
 
 // Download route (PRIMA di /:id)
 router.get("/:id/download", protect, downloadDocument);

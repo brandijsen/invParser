@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { useDispatch } from "react-redux";
 import { resetPasswordSuccess } from "../store/authSlice";
 import { validatePassword } from "../utils/passwordValidator";
+import PageLoader from "../components/PageLoader";
 
 const ResetPassword = () => {
   const [params] = useSearchParams();
-  const token = params.get("token");
+  const [token, setToken] = useState(undefined);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -15,6 +16,21 @@ const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const hash = window.location.hash || "";
+    let t = "";
+    if (hash.startsWith("#token=")) {
+      try {
+        t = decodeURIComponent(hash.slice(7));
+      } catch {
+        t = "";
+      }
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+    if (!t) t = params.get("token") || "";
+    setToken(t || null);
+  }, [params]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,6 +57,14 @@ const ResetPassword = () => {
       setError(msg || "Reset link invalid or expired.");
     }
   };
+
+  if (token === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <PageLoader message="Loading reset link…" />
+      </div>
+    );
+  }
 
   if (!token) {
     return (

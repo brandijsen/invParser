@@ -303,7 +303,33 @@ async findByIdForWorker(documentId) {
     "DELETE FROM documents WHERE id = ?",
     [documentId]
   );
-}
+},
+
+  /**
+   * Returns rows { id, stored_name } owned by user for the given ids (subset that exists).
+   */
+  async findDocumentsForBulkDelete(userId, documentIds) {
+    if (!documentIds?.length) return [];
+    const ids = [...new Set(documentIds.map((id) => parseInt(id, 10)).filter((n) => !isNaN(n)))];
+    if (!ids.length) return [];
+    const placeholders = ids.map(() => "?").join(",");
+    const [rows] = await pool.execute(
+      `SELECT id, stored_name FROM documents WHERE user_id = ? AND id IN (${placeholders})`,
+      [userId, ...ids]
+    );
+    return rows;
+  },
+
+  async deleteByIdsForUser(userId, documentIds) {
+    const ids = [...new Set(documentIds.map((id) => parseInt(id, 10)).filter((n) => !isNaN(n)))];
+    if (!ids.length) return 0;
+    const placeholders = ids.map(() => "?").join(",");
+    const [result] = await pool.execute(
+      `DELETE FROM documents WHERE user_id = ? AND id IN (${placeholders})`,
+      [userId, ...ids]
+    );
+    return result.affectedRows || 0;
+  },
 
 
 };

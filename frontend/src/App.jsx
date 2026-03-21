@@ -16,6 +16,7 @@ import "./App.css";
 // Lazy-loaded route components
 const Home = lazy(() => import("./pages/Home"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
 const VerifyError = lazy(() => import("./pages/VerifyError"));
 const GoogleSuccess = lazy(() => import("./pages/GoogleSuccess"));
@@ -123,7 +124,9 @@ function App() {
               }
             />
 
-            {/* EMAIL VERIFY */}
+            {/* EMAIL VERIFY (#token in hash → POST /auth/verify-email) */}
+            <Route path="/verify-email" element={<VerifyEmail />} />
+
             <Route
               path="/verify/success"
               element={
