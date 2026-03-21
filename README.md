@@ -112,6 +112,21 @@ The project is set up for Railway (Nixpacks):
 - Set env vars in the Railway dashboard
 - Frontend: build with Vite and serve the `dist` folder (e.g. via Railway static service or Vercel)
 
+## Database Backup
+
+The backup script (`backend/scripts/backup-database.js`) dumps MySQL, compresses, saves locally, and optionally uploads to S3. Failure alerts are sent via Brevo (or SMTP if `BREVO_API_KEY` is not set).
+
+**Run manually:**
+```bash
+cd backend && npm run backup
+```
+
+**Scheduling:** The backup is not automatic. Schedule it on the server where the app runs:
+- **Windows:** `backend/scripts/setup-task-scheduler.ps1` (daily at 3:00)
+- **Linux/Mac:** Add to crontab: `0 3 * * * cd /path/to/invParser/backend && node scripts/backup-database.js`
+
+**Note:** On Railway, the container has no `mysqldump` or cron. Run the backup from a local machine or a separate server that can reach the database.
+
 ## Environment Variables
 
 See `backend/.env.example` for full list. Main groups:

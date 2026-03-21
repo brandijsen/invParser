@@ -275,11 +275,21 @@ const Documents = () => {
     setSearchParams(params);
   };
 
-  // Export functions
+  // Export functions (pass current UI filters)
   const handleExport = async (format) => {
     setExporting(true);
     try {
-      const response = await api.get(`/documents/export/${format}`, {
+      const params = new URLSearchParams();
+      if (filters.status && filters.status !== "all") params.append("status", filters.status);
+      if (filters.dateFrom) params.append("dateFrom", filters.dateFrom);
+      if (filters.dateTo) params.append("dateTo", filters.dateTo);
+      if (filters.search) params.append("search", filters.search);
+      if (filters.defective && filters.defective !== "all") params.append("defective", filters.defective);
+      if (filters.supplier && filters.supplier !== "all") params.append("supplier", filters.supplier);
+      if (filters.tag && filters.tag !== "all") params.append("tag", filters.tag);
+      const qs = params.toString();
+      const exportUrl = `/documents/export/${format}${qs ? `?${qs}` : ""}`;
+      const response = await api.get(exportUrl, {
         responseType: "blob"
       });
 

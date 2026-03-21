@@ -8,6 +8,8 @@ import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PersistLogin from "./components/PersistLogin";
 import ErrorBoundary from "./components/ErrorBoundary";
+import ServiceUnavailable from "./pages/ServiceUnavailable";
+import { useBackendStatus } from "./context/BackendStatusContext";
 
 import "./App.css";
 
@@ -28,8 +30,11 @@ const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 function App() {
+  const { isDown, retry } = useBackendStatus();
+
   return (
     <>
+      {isDown && <ServiceUnavailable onRetry={retry} />}
       <Navbar />
       <VerificationBanner />
       <ResetSuccessBanner />

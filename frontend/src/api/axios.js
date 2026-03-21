@@ -1,9 +1,24 @@
-﻿import axios from "axios";
+import axios from "axios";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
   withCredentials: true, // 🔑 required for refresh token cookie
 });
+
+const isBackendDownError = (err) => {
+  if (!err) return false;
+  if (!err.response) {
+    const code = err.code;
+    return (
+      code === "ERR_NETWORK" ||
+      code === "ECONNABORTED" ||
+      code === "ETIMEDOUT" ||
+      code === "ERR_CONNECTION_REFUSED"
+    );
+  }
+  const status = err.response?.status;
+  return status === 502 || status === 503 || status === 504;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -28,6 +43,7 @@ api.interceptors.request.use(
 |--------------------------------------------------------------------------
 | RESPONSE INTERCEPTOR
 |--------------------------------------------------------------------------
+| On backend down → emit event for ServiceUnavailable overlay
 | On 401 → attempt refresh token ONCE
 */
 api.interceptors.response.use(
@@ -35,6 +51,12 @@ api.interceptors.response.use(
 
   async (error) => {
     const originalRequest = error.config;
+
+    // Backend unreachable → show Service Unavailable
+    if (isBackendDownError(error)) {
+      window.dispatchEvent(new CustomEvent("backend-down"));
+      return Promise.reject(error);
+    }
 
     // ❌ Not 401 → normal error
     if (error.response?.status !== 401) {

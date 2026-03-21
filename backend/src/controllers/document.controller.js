@@ -387,18 +387,21 @@ export const exportDocumentsCSV = async (req, res) => {
   
   try {
     const userId = req.user.id;
-    const defectiveOnly = req.query.defective === "only";
+    const filters = {
+      status: req.query.status || "all",
+      dateFrom: req.query.dateFrom || null,
+      dateTo: req.query.dateTo || null,
+      search: req.query.search || null,
+      defective: req.query.defective || "all",
+      supplier: req.query.supplier || "all",
+      tag: req.query.tag || "all"
+    };
 
     const { documents } = await DocumentModel.findByUser(userId, {
       page: 1,
       limit: 10000,
       exportMode: true,
-      filters: {
-        status: "done",
-        ...(defectiveOnly
-          ? { defective: "only" }
-          : { excludeDefective: true, invoiceOnly: true })
-      }
+      filters
     });
 
     log.info("CSV export started", { userId, documentCount: documents.length });
@@ -424,7 +427,7 @@ export const exportDocumentsCSV = async (req, res) => {
     res.setHeader("Content-Type", "text/csv");
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="documents${defectiveOnly ? "-defective" : ""}-${Date.now()}.csv"`
+      `attachment; filename="documents-${Date.now()}.csv"`
     );
     res.send(csv);
   } catch (err) {
@@ -490,18 +493,21 @@ export const exportDocumentsExcel = async (req, res) => {
   
   try {
     const userId = req.user.id;
-    const defectiveOnly = req.query.defective === "only";
+    const filters = {
+      status: req.query.status || "all",
+      dateFrom: req.query.dateFrom || null,
+      dateTo: req.query.dateTo || null,
+      search: req.query.search || null,
+      defective: req.query.defective || "all",
+      supplier: req.query.supplier || "all",
+      tag: req.query.tag || "all"
+    };
 
     const { documents } = await DocumentModel.findByUser(userId, {
       page: 1,
       limit: 10000,
       exportMode: true,
-      filters: {
-        status: "done",
-        ...(defectiveOnly
-          ? { defective: "only" }
-          : { excludeDefective: true, invoiceOnly: true })
-      }
+      filters
     });
 
     log.info("Excel export started", { userId, documentCount: documents.length });
@@ -530,7 +536,7 @@ export const exportDocumentsExcel = async (req, res) => {
     );
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="documents${defectiveOnly ? "-defective" : ""}-${Date.now()}.xlsx"`
+      `attachment; filename="documents-${Date.now()}.xlsx"`
     );
     res.send(buffer);
   } catch (err) {
