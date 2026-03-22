@@ -1,5 +1,7 @@
 # Local files
 todo.txt
+# Generated decks (keep outside version control if you build them locally)
+docs/*.pptx
 
 # Logs
 logs

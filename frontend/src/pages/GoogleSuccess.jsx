@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import api from "../api/axios";
 import { setUser } from "../store/authSlice";
+import PageLoader from "../components/PageLoader";
 
 const GoogleSuccess = () => {
   const dispatch = useDispatch();
@@ -23,7 +24,11 @@ const GoogleSuccess = () => {
     finish();
   }, [dispatch, navigate]);
 
-  return <div className="pt-40 text-center text-xl">Logging you in…</div>;
+  return (
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
+      <PageLoader message={null} variant="inline" />
+    </div>
+  );
 };
 
 export default GoogleSuccess;

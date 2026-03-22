@@ -29,7 +29,7 @@ Parse, manage and export invoice data from PDF documents. Upload invoices, extra
 ## Documentation
 
 - **`docs/API.md`** — REST API reference (auth, documents, health, …)  
-- **`docs/presentazione-invparser.md`** — Slide-by-slide outline for Google Slides / PowerPoint (Italian)
+- **`docs/ENV_VARS.md`** — Environment variables used by the backend
 
 ## Prerequisites
 
@@ -179,7 +179,7 @@ invParser/
 │   │   └── routes/
 │   ├── migrations/
 │   └── scripts/       # backup, backfill, etc.
-├── docs/              # API reference, presentation outline
+├── docs/              # API reference, env vars
 ├── docker-compose.yml # MySQL + Redis
 └── nixpacks.toml      # Railway build
 ```
