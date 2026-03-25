@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import api from "../api/axios";
 import PageLoader from "../components/PageLoader";
+import { setUser, setSessionResolved } from "../store/authSlice";
 
 /**
  * Opens from email: /verify-email#token=... (fragment not sent to servers on navigation).
@@ -28,18 +30,23 @@ const VerifyEmail = () => {
 
     if (!token) {
       setInvalid(true);
+      dispatch(setSessionResolved(true));
       return;
     }
 
     (async () => {
       try {
-        await api.post("/auth/verify-email", { token });
+        const { data } = await api.post("/auth/verify-email", { token });
+        if (data?.user) {
+          dispatch(setUser(data.user));
+        }
+        dispatch(setSessionResolved(true));
         navigate("/verify/success", { replace: true });
       } catch {
         navigate("/verify/error", { replace: true });
       }
     })();
-  }, [navigate]);
+  }, [navigate, dispatch]);
 
   if (invalid) {
     return (

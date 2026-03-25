@@ -14,7 +14,7 @@ function isEmailVerified(user) {
 
 const VerificationBanner = () => {
   const dispatch = useDispatch();
-  const { user, emailSent } = useSelector((state) => state.auth);
+  const { user, emailSent, sessionResolved } = useSelector((state) => state.auth);
 
   const [visible, setVisible] = useState(true);
   const [dismissed, setDismissed] = useState(false);
@@ -66,7 +66,9 @@ const VerificationBanner = () => {
     setDismissed(true);
   };
 
-  if (!user || isEmailVerified(user) || !visible || dismissed) return null;
+  if (!sessionResolved || !user || isEmailVerified(user) || !visible || dismissed) {
+    return null;
+  }
 
   return (
     <div

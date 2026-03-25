@@ -1,6 +1,16 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "../api/axios";
 
+function readStoredUser() {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 // ───────────────────────────────────────────────
 // ASYNC THUNKS
 // ───────────────────────────────────────────────
@@ -58,7 +68,9 @@ const authSlice = createSlice({
   name: "auth",
 
   initialState: {
-    user: JSON.parse(localStorage.getItem("user")) || null,
+    user: readStoredUser(),
+    /** false until first GET /auth/me (PersistLogin) or explicit sync — avoids stale localStorage user in UI */
+    sessionResolved: false,
     loading: false,
     error: null,
     emailSent: false,
@@ -70,6 +82,7 @@ const authSlice = createSlice({
       state.user = null;
       state.emailSent = false;
       state.resetSuccess = false;
+      state.sessionResolved = true;
 
       localStorage.removeItem("user");
     },
@@ -77,6 +90,10 @@ const authSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload;
       localStorage.setItem("user", JSON.stringify(action.payload));
+    },
+
+    setSessionResolved: (state, action) => {
+      state.sessionResolved = Boolean(action.payload);
     },
 
     resetPasswordSuccess: (state) => {
@@ -98,6 +115,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.sessionResolved = true;
 
         localStorage.setItem("user", JSON.stringify(action.payload.user));
       })
@@ -132,6 +150,7 @@ const authSlice = createSlice({
 export const {
   logout,
   setUser,
+  setSessionResolved,
   resetPasswordSuccess,
   clearResetSuccess,
 } = authSlice.actions;

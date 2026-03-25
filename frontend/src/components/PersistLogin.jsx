@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import api from "../api/axios";
-import { setUser, logout } from "../store/authSlice";
+import { setUser, logout, setSessionResolved } from "../store/authSlice";
 import PageLoader from "./PageLoader";
 
 const PersistLogin = ({ children }) => {
@@ -21,6 +21,7 @@ const PersistLogin = ({ children }) => {
           dispatch(logout());
         }
       } finally {
+        dispatch(setSessionResolved(true));
         setLoading(false);
       }
     };

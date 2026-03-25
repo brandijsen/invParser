@@ -5,7 +5,7 @@ import { pool } from "../../config/db.js";
 import { logAuth, logError } from "../../utils/logger.js";
 import { getRequestLogger } from "../../middlewares/logger.middleware.js";
 import { setRefreshCookie, setAccessCookie } from "../../utils/authCookies.js";
-import { createAccessToken, createRefreshToken } from "./auth.shared.js";
+import { createAccessToken, createRefreshToken, toSafeUser } from "./auth.shared.js";
 import { invalidateUserAuthCache } from "../../utils/userAuthCache.js";
 
 async function verifyEmailTokenAndSetSession(token, res) {
@@ -76,8 +76,8 @@ export const sendVerificationEmail = async (req, res) => {
 export const verify = async (req, res) => {
   try {
     const { token } = req.params;
-    const ok = await verifyEmailTokenAndSetSession(token, res);
-    if (!ok) {
+    const userId = await verifyEmailTokenAndSetSession(token, res);
+    if (userId == null) {
       logAuth("email_verification_failed", { reason: "invalid_token" });
       return res.redirect(`${process.env.FRONTEND_URL}/verify/error`);
     }
@@ -97,13 +97,14 @@ export const verifyEmailFromBody = async (req, res) => {
       return res.status(400).json({ message: "Token required" });
     }
 
-    const ok = await verifyEmailTokenAndSetSession(token, res);
-    if (!ok) {
+    const userId = await verifyEmailTokenAndSetSession(token, res);
+    if (userId == null) {
       logAuth("email_verification_failed", { reason: "invalid_token" });
       return res.status(400).json({ message: "Invalid or expired verification link" });
     }
 
-    return res.json({ ok: true });
+    const fresh = await User.findById(userId);
+    return res.json({ ok: true, user: toSafeUser(fresh) });
   } catch (err) {
     logError(err, { operation: "verifyEmailFromBody" });
     return res.status(500).json({ message: "Verification failed" });
