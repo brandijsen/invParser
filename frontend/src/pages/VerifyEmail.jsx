@@ -10,6 +10,7 @@ import { setUser, setSessionResolved } from "../store/authSlice";
  */
 const VerifyEmail = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [invalid, setInvalid] = useState(false);
 
   useEffect(() => {
