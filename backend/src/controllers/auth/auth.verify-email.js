@@ -15,7 +15,7 @@ async function verifyEmailTokenAndSetSession(token, res) {
   );
 
   const user = rows[0];
-  if (!user) return false;
+  if (!user) return null;
 
   await User.verifyUser(user.id);
   invalidateUserAuthCache(user.id);
@@ -27,7 +27,7 @@ async function verifyEmailTokenAndSetSession(token, res) {
 
   logAuth("email_verified", { userId: user.id, email: user.email });
 
-  return true;
+  return user.id;
 }
 
 export const sendVerificationEmail = async (req, res) => {

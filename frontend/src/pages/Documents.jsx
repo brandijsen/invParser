@@ -4,9 +4,9 @@ import DocumentFilters from "../components/DocumentFilters";
 import DocumentsBulkBar from "../components/documents/DocumentsBulkBar";
 import DocumentsTable from "../components/documents/DocumentsTable";
 import DocumentsPagination from "../components/documents/DocumentsPagination";
-import DocumentsListSkeleton from "../components/documents/DocumentsListSkeleton";
 import { useToast } from "../context/ToastContext";
 import { useDocumentsPage } from "../hooks/useDocumentsPage";
+import PageLoadingShell from "../components/PageLoadingShell";
 
 const Documents = () => {
   const { showToast } = useToast();
@@ -55,9 +55,7 @@ const Documents = () => {
           onReset={p.handleResetFilters}
         />
 
-        {p.loading ? (
-          <DocumentsListSkeleton />
-        ) : p.documents.length === 0 ? (
+        {p.documents.length === 0 ? (
           <div className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-10 sm:p-14 text-center max-w-xl mx-auto">
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 mb-5">
               <FiFileText className="w-7 h-7" strokeWidth={1.5} />

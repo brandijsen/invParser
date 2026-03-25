@@ -107,13 +107,14 @@ const Navbar = () => {
                     <Link
                       to="/profile"
                       onClick={() => setProfileOpen(false)}
-                      className="block w-full px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800 rounded-t-xl"
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-100 text-slate-800 rounded-t-xl"
                     >
                       <FiUser size={14} /> Profile
                     </Link>
                     <button
+                      type="button"
                       onClick={handleLogout}
-                      className="block w-full px-4 py-2.5 text-sm flex items-center gap-2 hover:bg-slate-100 text-slate-800 text-left rounded-b-xl"
+                      className="flex w-full items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-100 text-slate-800 text-left rounded-b-xl"
                     >
                       <FiLogOut size={14} /> Logout
                     </button>
@@ -164,7 +165,11 @@ const Navbar = () => {
                   <Link to="/profile" onClick={closeMobileMenu} className="py-3 text-white opacity-90 hover:opacity-100 flex items-center gap-2">
                     <FiUser size={16} /> Profile
                   </Link>
-                  <button onClick={handleLogout} className="py-3 text-left text-white opacity-90 hover:opacity-100 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="py-3 text-left text-white opacity-90 hover:opacity-100 flex items-center gap-2"
+                  >
                     <FiLogOut size={16} /> Logout
                   </button>
                 </>

@@ -72,13 +72,21 @@ if (process.env.NODE_ENV === "production") {
   app.use(globalRateLimiter);
 }
 
-// Test DB
-pool.execute("SELECT 1")
-  .then(() => logger.info("MySQL connected successfully"))
-  .catch(err => {
-    logger.error("MySQL connection failed", { 
-      error: err.message, 
-      stack: err.stack 
+// Test DB + log which database the pool uses (same source as Workbench must match: host, port, schema name)
+pool.execute("SELECT DATABASE() AS db")
+  .then(([rows]) => {
+    const resolvedDb = rows?.[0]?.db ?? process.env.DB_NAME;
+    logger.info("MySQL connected successfully", {
+      host: process.env.DB_HOST,
+      port: process.env.DB_PORT,
+      database: resolvedDb,
+      user: process.env.DB_USER,
+    });
+  })
+  .catch((err) => {
+    logger.error("MySQL connection failed", {
+      error: err.message,
+      stack: err.stack,
     });
   });
 

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import api from "../api/axios";
 import { setUser } from "../store/authSlice";
-import PageLoader from "../components/PageLoader";
+import PageLoadingShell from "../components/PageLoadingShell";
 
 const GoogleSuccess = () => {
   const dispatch = useDispatch();
@@ -24,11 +24,7 @@ const GoogleSuccess = () => {
     finish();
   }, [dispatch, navigate]);
 
-  return (
-    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-      <PageLoader message={null} variant="inline" />
-    </div>
-  );
+  return <PageLoadingShell message="Signing you in…" />;
 };
 
 export default GoogleSuccess;

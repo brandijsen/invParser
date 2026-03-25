@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import PageLoader from "../components/PageLoader";
+import PageLoadingShell from "../components/PageLoadingShell";
 import { useDashboardData } from "../hooks/useDashboardData";
 import {
   FiFileText,
@@ -37,11 +37,7 @@ const Dashboard = () => {
   const { overview, trends, latestDocuments, loading, error } = useDashboardData();
 
   if (loading) {
-    return (
-      <div className="pt-24 sm:pt-32 pb-24 min-h-screen bg-[#F5F7FA]">
-        <PageLoader message="Loading dashboard…" />
-      </div>
-    );
+    return <PageLoadingShell message="Loading dashboard…" />;
   }
 
   if (error) {

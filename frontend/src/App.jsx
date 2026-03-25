@@ -3,7 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import VerificationBanner from "./components/VerificationBanner";
 import ResetSuccessBanner from "./components/ResetSuccessBanner";
-import PageLoader from "./components/PageLoader";
+import PageLoadingShell from "./components/PageLoadingShell";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PersistLogin from "./components/PersistLogin";
@@ -42,14 +42,14 @@ function App() {
 
       <div className="pt-16 sm:pt-20 lg:pt-24">
         <ErrorBoundary>
-          <Suspense fallback={<PageLoader message="Loading…" />}>
+          <Suspense fallback={<PageLoadingShell message="Loading page…" />}>
             <Routes>
 
             {/* HOME (public) */}
             <Route
               path="/"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Loading home…">
                   <Home />
                 </PersistLogin>
               }
@@ -59,7 +59,7 @@ function App() {
             <Route
               path="/dashboard"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Checking session…">
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>
@@ -82,7 +82,7 @@ function App() {
             <Route
               path="/documents/:id"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Checking session…">
                   <ProtectedRoute>
                     <DocumentDetail />
                   </ProtectedRoute>
@@ -94,7 +94,7 @@ function App() {
             <Route
               path="/suppliers"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Checking session…">
                   <ProtectedRoute>
                     <Suppliers />
                   </ProtectedRoute>
@@ -106,7 +106,7 @@ function App() {
             <Route
               path="/profile"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Checking session…">
                   <ProtectedRoute>
                     <Profile />
                   </ProtectedRoute>
@@ -118,7 +118,7 @@ function App() {
             <Route
               path="/auth/google/success"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Signing you in…">
                   <GoogleSuccess />
                 </PersistLogin>
               }
@@ -130,7 +130,7 @@ function App() {
             <Route
               path="/verify/success"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Checking session…">
                   <VerifySuccess />
                 </PersistLogin>
               }
@@ -139,7 +139,7 @@ function App() {
             <Route
               path="/verify/error"
               element={
-                <PersistLogin>
+                <PersistLogin loaderMessage="Checking session…">
                   <VerifyError />
                 </PersistLogin>
               }

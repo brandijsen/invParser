@@ -14,7 +14,7 @@ const AccountDeleted = () => {
   }, [dispatch]);
 
   return (
-    <div className="pt-24 pb-24 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4">
+    <div className="pt-24 sm:pt-32 pb-24 min-h-screen bg-[#F5F7FA] flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-xl border border-slate-200 shadow-sm p-8 text-center">
         {hasError ? (
           <>

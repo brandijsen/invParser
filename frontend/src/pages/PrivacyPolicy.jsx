@@ -3,7 +3,7 @@ import { FiShield } from "react-icons/fi";
 
 const PrivacyPolicy = () => {
   return (
-    <div className="pt-20 sm:pt-24 pb-16 sm:pb-24 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="pt-24 sm:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 mb-6 sm:mb-8">
           <FiShield className="text-emerald-600 shrink-0" size={24} />

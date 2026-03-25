@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import api from "../api/axios";
 import { FiSearch, FiX, FiBriefcase, FiFileText } from "react-icons/fi";
 import PageLoader from "../components/PageLoader";
+import PageLoadingShell from "../components/PageLoadingShell";
 
 const Suppliers = () => {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [search, setSearch] = useState("");
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState(null);
@@ -41,8 +43,12 @@ const Suppliers = () => {
     setSelectedSupplier(null);
   };
 
+  if (loading && !hasLoadedOnce) {
+    return <PageLoadingShell message="Loading suppliers…" />;
+  }
+
   return (
-    <div className="pt-20 sm:pt-24 pb-16 sm:pb-24 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="pt-24 sm:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">

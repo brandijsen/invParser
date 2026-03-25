@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { FiAlertTriangle, FiCheckCircle, FiBriefcase } from "react-icons/fi";
 import api from "../api/axios";
 import { useToast } from "../context/ToastContext";
-import PageLoader from "../components/PageLoader";
+import PageLoadingShell from "../components/PageLoadingShell";
 import DocumentHeader from "../components/DocumentHeader";
 import PrimaryAmountCard from "../components/PrimaryAmountCard";
 import FinancialBreakdown from "../components/FinancialBreakdown";
@@ -99,11 +99,7 @@ const DocumentDetail = () => {
   const hasValidationIssues = validationFlags.length > 0;
 
   if (loading) {
-    return (
-      <div className="pt-24 sm:pt-32 px-4 sm:px-8 min-h-screen bg-[#F5F7FA]">
-        <PageLoader message="Loading invoice…" />
-      </div>
-    );
+    return <PageLoadingShell message="Loading invoice…" />;
   }
 
   if (error === "not_found") {

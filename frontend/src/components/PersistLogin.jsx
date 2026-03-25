@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import api from "../api/axios";
 import { setUser, logout, setSessionResolved } from "../store/authSlice";
-import PageLoader from "./PageLoader";
+import PageLoadingShell from "./PageLoadingShell";
 
-const PersistLogin = ({ children }) => {
+const PersistLogin = ({ children, loaderMessage = "Checking session…" }) => {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
+  const sessionResolved = useSelector((s) => s.auth.sessionResolved);
+  /** After email verify (or any route where session was just synced), avoid a full-screen loader flash */
+  const [loading, setLoading] = useState(() => !sessionResolved);
 
   useEffect(() => {
     localStorage.removeItem("accessToken");
@@ -30,11 +32,7 @@ const PersistLogin = ({ children }) => {
   }, [dispatch]);
 
   if (loading) {
-    return (
-      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center">
-        <PageLoader message="Checking session…" variant="inline" />
-      </div>
-    );
+    return <PageLoadingShell message={loaderMessage} />;
   }
 
   return children;

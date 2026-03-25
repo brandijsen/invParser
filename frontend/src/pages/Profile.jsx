@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import api from "../api/axios";
 import { validatePassword } from "../utils/passwordValidator";
 import { setUser, logout } from "../store/authSlice";
@@ -10,7 +10,6 @@ import { FiUser, FiLock, FiCamera, FiDownload, FiTrash2 } from "react-icons/fi";
 const Profile = () => {
   const { user } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
-  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -150,12 +149,11 @@ const Profile = () => {
   };
 
   if (!user) {
-    navigate("/", { state: { openLogin: true } });
-    return null;
+    return <Navigate to="/" replace state={{ openLogin: true }} />;
   }
 
   return (
-    <div className="pt-20 sm:pt-24 pb-16 sm:pb-24 min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="pt-24 sm:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2 mb-2">
           <FiUser className="text-emerald-600" />
