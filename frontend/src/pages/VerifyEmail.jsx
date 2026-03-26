@@ -82,7 +82,7 @@ const VerifyEmail = () => {
     );
   }
 
-  return <PageLoadingShell message="Verifying your email…" />;
+  return <PageLoadingShell />;
 };
 
 export default VerifyEmail;

@@ -76,7 +76,7 @@ const VerificationBanner = () => {
       className="fixed top-14 sm:top-16 left-0 right-0 z-40 flex justify-center px-3 sm:px-4 pt-2 sm:pt-3 pointer-events-none"
     >
       <div
-        className={`pointer-events-auto relative flex w-full max-w-2xl flex-col gap-3 rounded-xl border py-3 pl-4 pr-11 shadow-md shadow-slate-900/6 sm:flex-row sm:items-center sm:justify-between sm:pr-12 ${
+        className={`pointer-events-auto relative flex w-full max-w-lg flex-col gap-3 rounded-xl border py-3 pl-4 pr-11 shadow-md shadow-slate-900/6 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:pr-12 ${
           emailSent
             ? "border-emerald-200 bg-emerald-50/90"
             : "border-slate-200 bg-white"
@@ -93,14 +93,14 @@ const VerificationBanner = () => {
 
         {!emailSent ? (
           <>
-            <div className="flex min-w-0 items-start gap-3 text-left">
+            <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
               <span
-                className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-500"
                 aria-hidden
               >
-                <FiMail className="h-5 w-5" />
+                <FiMail className="h-5 w-5" strokeWidth={2} />
               </span>
-              <p className="pt-1 text-sm leading-snug text-slate-700">
+              <p className="text-sm leading-snug text-slate-700">
                 <span className="font-semibold text-slate-900">
                   Your email is not verified.
                 </span>

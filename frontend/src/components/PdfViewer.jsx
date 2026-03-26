@@ -45,7 +45,7 @@ const PdfViewer = ({ documentId, className = "" }) => {
   if (loading) {
     return (
       <div className={`bg-slate-100 rounded-lg min-h-[500px] ${className}`}>
-        <PageLoader message="Loading PDF…" variant="inline" />
+        <PageLoader variant="inline" />
       </div>
     );
   }

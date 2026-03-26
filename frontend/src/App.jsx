@@ -1,9 +1,7 @@
-import { lazy, Suspense } from "react";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import VerificationBanner from "./components/VerificationBanner";
 import ResetSuccessBanner from "./components/ResetSuccessBanner";
-import PageLoadingShell from "./components/PageLoadingShell";
 import Footer from "./components/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PersistLogin from "./components/PersistLogin";
@@ -11,24 +9,23 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import ServiceUnavailable from "./pages/ServiceUnavailable";
 import { useBackendStatus } from "./context/BackendStatusContext";
 
-import "./App.css";
+import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerifySuccess from "./pages/VerifySuccess";
+import VerifyError from "./pages/VerifyError";
+import GoogleSuccess from "./pages/GoogleSuccess";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import Documents from "./pages/Documents";
+import DocumentDetail from "./pages/DocumentDetail";
+import Suppliers from "./pages/Suppliers";
+import Profile from "./pages/Profile";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import AccountDeleted from "./pages/AccountDeleted";
+import NotFound from "./pages/NotFound";
 
-// Lazy-loaded route components
-const Home = lazy(() => import("./pages/Home"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
-const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
-const VerifyError = lazy(() => import("./pages/VerifyError"));
-const GoogleSuccess = lazy(() => import("./pages/GoogleSuccess"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const Documents = lazy(() => import("./pages/Documents"));
-const DocumentDetail = lazy(() => import("./pages/DocumentDetail"));
-const Suppliers = lazy(() => import("./pages/Suppliers"));
-const Profile = lazy(() => import("./pages/Profile"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const AccountDeleted = lazy(() => import("./pages/AccountDeleted"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+import "./App.css";
 
 function App() {
   const { isDown, retry } = useBackendStatus();
@@ -42,124 +39,73 @@ function App() {
 
       <div className="pt-16 sm:pt-20 lg:pt-24">
         <ErrorBoundary>
-          <Suspense fallback={<PageLoadingShell message="Loading page…" />}>
+          <PersistLogin>
             <Routes>
+              <Route path="/" element={<Home />} />
 
-            {/* HOME (public) */}
-            <Route
-              path="/"
-              element={
-                <PersistLogin loaderMessage="Loading home…">
-                  <Home />
-                </PersistLogin>
-              }
-            />
-
-            {/* DASHBOARD (default after login) */}
-            <Route
-              path="/dashboard"
-              element={
-                <PersistLogin loaderMessage="Checking session…">
+              <Route
+                path="/dashboard"
+                element={
                   <ProtectedRoute>
                     <Dashboard />
                   </ProtectedRoute>
-                </PersistLogin>
-              }
-            />
+                }
+              />
 
-            {/* DOCUMENTS */}
-            <Route
-              path="/documents"
-              element={
-                <PersistLogin>
+              <Route
+                path="/documents"
+                element={
                   <ProtectedRoute>
                     <Documents />
                   </ProtectedRoute>
-                </PersistLogin>
-              }
-            />
+                }
+              />
 
-            <Route
-              path="/documents/:id"
-              element={
-                <PersistLogin loaderMessage="Checking session…">
+              <Route
+                path="/documents/:id"
+                element={
                   <ProtectedRoute>
                     <DocumentDetail />
                   </ProtectedRoute>
-                </PersistLogin>
-              }
-            />
+                }
+              />
 
-            {/* SUPPLIERS */}
-            <Route
-              path="/suppliers"
-              element={
-                <PersistLogin loaderMessage="Checking session…">
+              <Route
+                path="/suppliers"
+                element={
                   <ProtectedRoute>
                     <Suppliers />
                   </ProtectedRoute>
-                </PersistLogin>
-              }
-            />
+                }
+              />
 
-            {/* PROFILE */}
-            <Route
-              path="/profile"
-              element={
-                <PersistLogin loaderMessage="Checking session…">
+              <Route
+                path="/profile"
+                element={
                   <ProtectedRoute>
                     <Profile />
                   </ProtectedRoute>
-                </PersistLogin>
-              }
-            />
+                }
+              />
 
-            {/* GOOGLE */}
-            <Route
-              path="/auth/google/success"
-              element={
-                <PersistLogin loaderMessage="Signing you in…">
-                  <GoogleSuccess />
-                </PersistLogin>
-              }
-            />
+              <Route path="/auth/google/success" element={<GoogleSuccess />} />
 
-            {/* EMAIL VERIFY (#token in hash → POST /auth/verify-email) */}
-            <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
 
-            <Route
-              path="/verify/success"
-              element={
-                <PersistLogin loaderMessage="Checking session…">
-                  <VerifySuccess />
-                </PersistLogin>
-              }
-            />
+              <Route path="/verify/success" element={<VerifySuccess />} />
 
-            <Route
-              path="/verify/error"
-              element={
-                <PersistLogin loaderMessage="Checking session…">
-                  <VerifyError />
-                </PersistLogin>
-              }
-            />
+              <Route path="/verify/error" element={<VerifyError />} />
 
-            {/* ACCOUNT DELETED (redirect from email link) */}
-            <Route path="/account-deleted" element={<AccountDeleted />} />
+              <Route path="/account-deleted" element={<AccountDeleted />} />
 
-            {/* PASSWORD FLOW */}
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            <Route
-              path="/reset-password"
-              element={<ResetPassword />}
-            />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </PersistLogin>
         </ErrorBoundary>
       </div>
 

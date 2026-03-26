@@ -40,7 +40,7 @@ const VerifySuccess = () => {
   }, [dispatch, alreadyVerified]);
 
   if (loading) {
-    return <PageLoadingShell message="Verifying your account…" />;
+    return <PageLoadingShell />;
   }
 
   if (failed) {

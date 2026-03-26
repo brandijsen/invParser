@@ -99,7 +99,7 @@ const DocumentDetail = () => {
   const hasValidationIssues = validationFlags.length > 0;
 
   if (loading) {
-    return <PageLoadingShell message="Loading invoice…" />;
+    return <PageLoadingShell />;
   }
 
   if (error === "not_found") {

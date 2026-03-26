@@ -44,7 +44,7 @@ const Suppliers = () => {
   };
 
   if (loading && !hasLoadedOnce) {
-    return <PageLoadingShell message="Loading suppliers…" />;
+    return <PageLoadingShell />;
   }
 
   return (
@@ -76,7 +76,7 @@ const Suppliers = () => {
         {/* List */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {loading ? (
-            <PageLoader message="Loading suppliers…" variant="inline" />
+            <PageLoader variant="inline" />
           ) : suppliers.length === 0 ? (
             <div className="py-12 text-center text-slate-500">
               <FiBriefcase className="w-12 h-12 mx-auto mb-4 text-slate-300" />

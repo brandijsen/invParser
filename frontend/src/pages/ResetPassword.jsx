@@ -59,11 +59,7 @@ const ResetPassword = () => {
   };
 
   if (token === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <PageLoader message="Loading reset link…" />
-      </div>
-    );
+    return <PageLoadingShell />;
   }
 
   if (!token) {

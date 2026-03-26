@@ -37,7 +37,7 @@ const Dashboard = () => {
   const { overview, trends, latestDocuments, loading, error } = useDashboardData();
 
   if (loading) {
-    return <PageLoadingShell message="Loading dashboard…" />;
+    return <PageLoadingShell />;
   }
 
   if (error) {

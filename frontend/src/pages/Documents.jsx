@@ -12,6 +12,10 @@ const Documents = () => {
   const { showToast } = useToast();
   const p = useDocumentsPage(showToast);
 
+  if (p.loading) {
+    return <PageLoadingShell />;
+  }
+
   return (
     <div className="pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-24 min-h-screen bg-[#F5F7FA]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-10">

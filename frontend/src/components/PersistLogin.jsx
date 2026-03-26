@@ -4,10 +4,9 @@ import api from "../api/axios";
 import { setUser, logout, setSessionResolved } from "../store/authSlice";
 import PageLoadingShell from "./PageLoadingShell";
 
-const PersistLogin = ({ children, loaderMessage = "Checking session…" }) => {
+const PersistLogin = ({ children }) => {
   const dispatch = useDispatch();
   const sessionResolved = useSelector((s) => s.auth.sessionResolved);
-  /** After email verify (or any route where session was just synced), avoid a full-screen loader flash */
   const [loading, setLoading] = useState(() => !sessionResolved);
 
   useEffect(() => {
@@ -32,7 +31,7 @@ const PersistLogin = ({ children, loaderMessage = "Checking session…" }) => {
   }, [dispatch]);
 
   if (loading) {
-    return <PageLoadingShell message={loaderMessage} />;
+    return <PageLoadingShell />;
   }
 
   return children;

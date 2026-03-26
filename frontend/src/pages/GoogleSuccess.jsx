@@ -24,7 +24,7 @@ const GoogleSuccess = () => {
     finish();
   }, [dispatch, navigate]);
 
-  return <PageLoadingShell message="Signing you in…" />;
+  return <PageLoadingShell />;
 };
 
 export default GoogleSuccess;
