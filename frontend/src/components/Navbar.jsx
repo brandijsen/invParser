@@ -100,7 +100,7 @@ const Navbar = () => {
                   onClick={() => setProfileOpen(!profileOpen)}
                   className="ring-2 ring-white/50 rounded-full overflow-hidden"
                 >
-                  <UserAvatar user={user} size={36} />
+                  <UserAvatar key={user?.avatar_path ?? "no-avatar"} user={user} size={36} />
                 </button>
                 {profileOpen && (
                   <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-lg overflow-hidden">

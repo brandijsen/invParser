@@ -1,47 +1,70 @@
 import { useState, useEffect, useRef } from "react";
+import api from "../api/axios";
 
 /**
- * Avatar utente: mostra immagine se presente, altrimenti iniziale nome
+ * User avatar: image from GET /auth/avatar (cookies) or name initial. Upload lives on Profile.
  */
 const UserAvatar = ({ user, size = 36, className = "" }) => {
   const [src, setSrc] = useState(null);
-  const objectUrlRef = useRef(null);
+  const blobRef = useRef(null);
+  /** Monotonic id so in-flight fetches from a previous effect run cannot call setSrc after a newer run. */
+  const loadIdRef = useRef(0);
 
   useEffect(() => {
-    if (!user?.avatar_url) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear blob preview when avatar removed
-      setSrc(null);
-      return () => {
-        if (objectUrlRef.current) {
-          URL.revokeObjectURL(objectUrlRef.current);
-          objectUrlRef.current = null;
-        }
-      };
-    }
-    const baseURL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-    const url = baseURL.replace("/api", "") + "/api/auth/avatar";
+    const myLoad = ++loadIdRef.current;
 
-    fetch(url, {
-      credentials: "include",
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error("");
-        return r.blob();
-      })
-      .then((blob) => {
-        if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = URL.createObjectURL(blob);
-        setSrc(objectUrlRef.current);
-      })
-      .catch(() => setSrc(null));
+    const hasAvatar =
+      (user?.avatar_path != null && String(user.avatar_path).length > 0) ||
+      Boolean(user?.avatar_url);
+
+    if (!hasAvatar) {
+      if (blobRef.current) {
+        URL.revokeObjectURL(blobRef.current);
+        blobRef.current = null;
+      }
+      setSrc(null);
+      return;
+    }
+
+    const baseURL =
+      api.defaults.baseURL || `${import.meta.env.VITE_API_URL || "http://localhost:5000/api"}`;
+    const origin = String(baseURL).replace(/\/api\/?$/, "");
+    const base = `${origin}/api/auth/avatar`;
+    const url = user?.avatar_path
+      ? `${base}?v=${encodeURIComponent(user.avatar_path)}`
+      : base;
+
+    const ac = new AbortController();
+
+    (async () => {
+      try {
+        const r = await fetch(url, {
+          signal: ac.signal,
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (!r.ok) throw new Error(`fetch failed ${r.status}`);
+        const blob = await r.blob();
+        if (myLoad !== loadIdRef.current) return;
+        const blobUrl = URL.createObjectURL(blob);
+        if (blobRef.current) URL.revokeObjectURL(blobRef.current);
+        blobRef.current = blobUrl;
+        setSrc(blobUrl);
+      } catch (e) {
+        if (e.name === "AbortError") return;
+        if (myLoad !== loadIdRef.current) return;
+        if (blobRef.current) {
+          URL.revokeObjectURL(blobRef.current);
+          blobRef.current = null;
+        }
+        setSrc(null);
+      }
+    })();
 
     return () => {
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
-      }
+      ac.abort();
     };
-  }, [user?.avatar_url]);
+  }, [user?.avatar_path, user?.avatar_url]);
 
   const fallback = user?.name ? user.name[0].toUpperCase() : "?";
 

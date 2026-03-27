@@ -43,22 +43,29 @@ export const User = {
   },
 
   async findById(id) {
-    try {
-      const [rows] = await pool.execute(
-        "SELECT id, name, email, avatar_path, verified, verification_token, password, auth_provider, refresh_token_version FROM users WHERE id = ? LIMIT 1",
-        [id]
-      );
-      return rows[0];
-    } catch (e) {
-      if (e.code === "ER_BAD_FIELD_ERROR") {
-        const [rows] = await pool.execute(
-          "SELECT id, name, email, verified, verification_token, password, auth_provider FROM users WHERE id = ? LIMIT 1",
-          [id]
-        );
-        return { ...rows[0], auth_provider: "email", refresh_token_version: 0 };
+    /** Try SELECTs from full schema down to legacy; ER_BAD_FIELD_ERROR if a column is missing (e.g. refresh_token_version without losing avatar_path). */
+    const attempts = [
+      "SELECT id, name, email, avatar_path, verified, verification_token, password, auth_provider, refresh_token_version FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, name, email, avatar_path, verified, verification_token, password, auth_provider FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, name, email, verified, verification_token, password, auth_provider FROM users WHERE id = ? LIMIT 1",
+    ];
+    let lastErr;
+    for (const sql of attempts) {
+      try {
+        const [rows] = await pool.execute(sql, [id]);
+        const row = rows[0];
+        if (!row) return undefined;
+        return {
+          ...row,
+          auth_provider: row.auth_provider ?? "email",
+          refresh_token_version: Number(row.refresh_token_version ?? 0) || 0,
+        };
+      } catch (e) {
+        if (e.code !== "ER_BAD_FIELD_ERROR") throw e;
+        lastErr = e;
       }
-      throw e;
     }
+    throw lastErr;
   },
 
   async incrementRefreshTokenVersion(id) {

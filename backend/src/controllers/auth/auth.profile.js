@@ -189,20 +189,30 @@ export const uploadAvatar = async (req, res) => {
     const oldPath = req.user.avatar_path;
     const filename = req.file.filename;
 
-    if (oldPath) {
+    await User.updateAvatar(userId, filename);
+    invalidateUserAuthCache(userId);
+
+    if (oldPath && oldPath !== filename) {
       const oldFullPath = getFilePath(userId, oldPath);
       if (fs.existsSync(oldFullPath)) {
         fs.unlinkSync(oldFullPath);
       }
     }
 
-    await User.updateAvatar(userId, filename);
     const updated = await User.findById(userId);
-    invalidateUserAuthCache(userId);
 
     logAuth("avatar_updated", { userId });
 
-    return res.json(toSafeUser(updated));
+    const safe = toSafeUser(updated);
+    /** If findById used a legacy SELECT without avatar_path, row still lacks path though UPDATE succeeded. */
+    if (filename && !safe.avatar_path) {
+      safe.avatar_path = filename;
+      if (process.env.BASE_URL) {
+        safe.avatar_url = `${process.env.BASE_URL}/api/auth/avatar`;
+      }
+    }
+
+    return res.json(safe);
   } catch (err) {
     logError(err, { operation: "uploadAvatar", userId: req.user?.id });
     return res.status(500).json({ message: err.message });
@@ -230,6 +240,7 @@ export const getAvatar = async (req, res) => {
       ".webp": "image/webp",
     };
     res.type(types[ext] || "image/jpeg");
+    res.setHeader("Cache-Control", "private, no-store, must-revalidate");
     res.sendFile(fullPath);
   } catch (err) {
     logError(err, { operation: "getAvatar", userId: req.user?.id });

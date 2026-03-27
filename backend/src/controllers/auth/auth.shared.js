@@ -18,8 +18,11 @@ export function toSafeUser(u) {
     email: u.email,
     verified: u.verified,
   };
-  if (u.avatar_path && process.env.BASE_URL) {
-    safe.avatar_url = `${process.env.BASE_URL}/api/auth/avatar`;
+  if (u.avatar_path) {
+    safe.avatar_path = u.avatar_path;
+    if (process.env.BASE_URL) {
+      safe.avatar_url = `${process.env.BASE_URL}/api/auth/avatar`;
+    }
   }
   return safe;
 }

@@ -2,15 +2,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { sendVerificationEmail } from "../store/authSlice";
 import { useEffect, useState, useCallback } from "react";
 import { FiMail, FiCheckCircle, FiX } from "react-icons/fi";
+import { isEmailVerified } from "../utils/isEmailVerified";
 
 const dismissStorageKey = (userId) =>
   `invparser:dismissVerifyBanner:${userId}`;
-
-function isEmailVerified(user) {
-  if (!user) return false;
-  const v = user.verified;
-  return v === 1 || v === true || v === "1" || Number(v) === 1;
-}
 
 const VerificationBanner = () => {
   const dispatch = useDispatch();

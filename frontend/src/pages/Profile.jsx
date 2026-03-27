@@ -1,14 +1,20 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Navigate } from "react-router-dom";
 import api from "../api/axios";
 import { validatePassword } from "../utils/passwordValidator";
-import { setUser, logout } from "../store/authSlice";
-import UserAvatar from "../components/UserAvatar";
-import { FiUser, FiLock, FiCamera, FiDownload, FiTrash2 } from "react-icons/fi";
+import { setUser, sendVerificationEmail } from "../store/authSlice";
+import { isEmailVerified } from "../utils/isEmailVerified";
+import { FiUser } from "react-icons/fi";
+import ProfileEmailVerificationCard from "../components/profile/ProfileEmailVerificationCard";
+import ProfileAvatarSection from "../components/profile/ProfileAvatarSection";
+import ProfilePersonalInfoForm from "../components/profile/ProfilePersonalInfoForm";
+import ProfilePasswordForm from "../components/profile/ProfilePasswordForm";
+import ProfileDataPrivacySection from "../components/profile/ProfileDataPrivacySection";
+import ProfileDeleteAccountModal from "../components/profile/ProfileDeleteAccountModal";
 
 const Profile = () => {
-  const { user } = useSelector((s) => s.auth);
+  const { user, emailSent } = useSelector((s) => s.auth);
   const dispatch = useDispatch();
 
   const [name, setName] = useState("");
@@ -26,13 +32,15 @@ const Profile = () => {
 
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [avatarError, setAvatarError] = useState("");
-  const fileInputRef = useRef(null);
 
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleteEmailSent, setDeleteEmailSent] = useState(false);
+
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyError, setVerifyError] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -61,7 +69,14 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
-    if (!allowed.includes(file.type)) {
+    const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const extOk = ["jpg", "jpeg", "png", "webp"].includes(ext);
+    if (file.type) {
+      if (!allowed.includes(file.type)) {
+        setAvatarError("JPEG, PNG or WebP only (max 2MB)");
+        return;
+      }
+    } else if (!extOk) {
       setAvatarError("JPEG, PNG or WebP only (max 2MB)");
       return;
     }
@@ -75,7 +90,8 @@ const Profile = () => {
       const formData = new FormData();
       formData.append("avatar", file);
       const res = await api.post("/auth/profile/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
       });
       dispatch(setUser(res.data));
     } catch (err) {
@@ -118,6 +134,20 @@ const Profile = () => {
     }
   };
 
+  const handleSendVerification = async () => {
+    setVerifyError("");
+    setVerifyLoading(true);
+    try {
+      await dispatch(sendVerificationEmail()).unwrap();
+    } catch (err) {
+      setVerifyError(
+        typeof err === "string" ? err : err?.message || "Could not send verification email."
+      );
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordError("");
@@ -148,6 +178,17 @@ const Profile = () => {
     }
   };
 
+  const handleDeleteModalCancel = () => {
+    setDeleteModalOpen(false);
+    setDeleteError("");
+  };
+
+  const handleDeleteModalCloseAfterSent = () => {
+    setDeleteModalOpen(false);
+    setDeleteEmailSent(false);
+    setDeleteError("");
+  };
+
   if (!user) {
     return <Navigate to="/" replace state={{ openLogin: true }} />;
   }
@@ -161,217 +202,62 @@ const Profile = () => {
         </h1>
         <p className="text-slate-600 mb-8">Manage your account settings.</p>
 
-        {/* Avatar */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Profile picture</h2>
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <UserAvatar user={user} size={96} className="ring-2 ring-slate-200" />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={avatarLoading}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 disabled:opacity-50 shadow"
-              >
-                <FiCamera size={14} />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-slate-600">
-                JPEG, PNG or WebP. Max 2MB.
-              </p>
-              {avatarError && <p className="text-red-600 text-sm mt-1">{avatarError}</p>}
-            </div>
-          </div>
-        </div>
+        {!isEmailVerified(user) && (
+          <ProfileEmailVerificationCard
+            emailSent={emailSent}
+            verifyLoading={verifyLoading}
+            verifyError={verifyError}
+            onSendVerification={handleSendVerification}
+          />
+        )}
 
-        {/* Profile form */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Personal info</h2>
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            {profileError && (
-              <p className="text-red-600 text-sm">{profileError}</p>
-            )}
-            {profileSuccess && (
-              <p className="text-emerald-600 text-sm">Profile updated successfully.</p>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={profileLoading}
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {profileLoading ? "Saving…" : "Save changes"}
-            </button>
-          </form>
-        </div>
+        <ProfileAvatarSection
+          user={user}
+          avatarLoading={avatarLoading}
+          avatarError={avatarError}
+          onAvatarChange={handleAvatarChange}
+        />
 
-        {/* Password form */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-            <FiLock className="text-slate-500" />
-            Change password
-          </h2>
-          <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            {passwordError && (
-              <p className="text-red-600 text-sm">{passwordError}</p>
-            )}
-            {passwordSuccess && (
-              <p className="text-emerald-600 text-sm">Password updated successfully.</p>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Current password</label>
-              <input
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="••••••••"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">New password (min 8 chars, 1 upper, 1 lower, 1 number)</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="••••••••"
-                minLength={6}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Confirm new password</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                placeholder="••••••••"
-                minLength={6}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={passwordLoading}
-              className="px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-800 disabled:opacity-50"
-            >
-              {passwordLoading ? "Updating…" : "Update password"}
-            </button>
-          </form>
-          <p className="text-sm text-slate-500 mt-3">
-            If you signed up with Google and want to set a password, use the Forgot password flow.
-          </p>
-        </div>
+        <ProfilePersonalInfoForm
+          name={name}
+          email={email}
+          onNameChange={(e) => setName(e.target.value)}
+          onEmailChange={(e) => setEmail(e.target.value)}
+          profileLoading={profileLoading}
+          profileError={profileError}
+          profileSuccess={profileSuccess}
+          onSubmit={handleProfileSubmit}
+        />
 
-        {/* Data & Privacy */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mt-6">
-          <h2 className="text-lg font-semibold text-slate-800 mb-4">Data & Privacy</h2>
-          <p className="text-sm text-slate-600 mb-4">
-            Export your data or permanently delete your account (GDPR rights).
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={handleExportData}
-              disabled={exportLoading}
-              className="px-4 py-2 rounded-lg bg-slate-100 text-slate-800 font-medium hover:bg-slate-200 disabled:opacity-50 flex items-center gap-2"
-            >
-              <FiDownload size={16} />
-              {exportLoading ? "Exporting…" : "Export my data"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setDeleteModalOpen(true)}
-              className="px-4 py-2 rounded-lg bg-red-50 text-red-700 font-medium hover:bg-red-100 flex items-center gap-2"
-            >
-              <FiTrash2 size={16} />
-              Delete account
-            </button>
-          </div>
-        </div>
+        <ProfilePasswordForm
+          currentPassword={currentPassword}
+          newPassword={newPassword}
+          confirmPassword={confirmPassword}
+          onCurrentPasswordChange={(e) => setCurrentPassword(e.target.value)}
+          onNewPasswordChange={(e) => setNewPassword(e.target.value)}
+          onConfirmPasswordChange={(e) => setConfirmPassword(e.target.value)}
+          passwordLoading={passwordLoading}
+          passwordError={passwordError}
+          passwordSuccess={passwordSuccess}
+          onSubmit={handlePasswordSubmit}
+        />
+
+        <ProfileDataPrivacySection
+          exportLoading={exportLoading}
+          onExportData={handleExportData}
+          onOpenDeleteModal={() => setDeleteModalOpen(true)}
+        />
       </div>
 
-      {/* Delete Account Modal */}
-      {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-4 sm:p-6 my-auto">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete account</h3>
-            {deleteEmailSent ? (
-              <>
-                <p className="text-slate-600 text-sm mb-4">
-                  We sent you an email with a link to confirm deletion. Check your inbox (including spam). The link expires in 24 hours.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDeleteModalOpen(false);
-                    setDeleteEmailSent(false);
-                    setDeleteError("");
-                  }}
-                  className="w-full px-4 py-2 rounded-lg bg-slate-700 text-white font-medium hover:bg-slate-800"
-                >
-                  Close
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-slate-600 text-sm mb-4">
-                  Your account and all data (invoices, suppliers, tags) will be permanently deleted. We will send you an email with a link to confirm. This action is irreversible.
-                </p>
-                <form onSubmit={handleRequestDelete} className="space-y-4">
-                  {deleteError && <p className="text-red-600 text-sm">{deleteError}</p>}
-                  <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDeleteModalOpen(false);
-                        setDeleteError("");
-                      }}
-                      className="flex-1 px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={deleteLoading}
-                      className="flex-1 px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 disabled:opacity-50"
-                    >
-                      {deleteLoading ? "Sending…" : "Send link via email"}
-                    </button>
-                  </div>
-                </form>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <ProfileDeleteAccountModal
+        open={deleteModalOpen}
+        deleteEmailSent={deleteEmailSent}
+        deleteLoading={deleteLoading}
+        deleteError={deleteError}
+        onRequestDelete={handleRequestDelete}
+        onCancel={handleDeleteModalCancel}
+        onCloseAfterSent={handleDeleteModalCloseAfterSent}
+      />
     </div>
   );
 };
